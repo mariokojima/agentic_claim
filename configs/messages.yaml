@@ -1,0 +1,23 @@
+# Mensagens determinísticas ao cliente (templates str.format). Redação por LLM entra nas fases 3+.
+triage:
+  ask_cpf: "Olá! Sou o assistente virtual de sinistros. Para começar, informe o CPF do titular da apólice."
+  invalid_cpf: "Não consegui identificar um CPF válido. Pode digitar novamente, só os números?"
+  identified: "Obrigado, {name}! Localizei sua apólice {policy} (veículo {plate})."
+notice:
+  ask_description: "Vamos registrar o aviso de sinistro. Descreva o ocorrido: quando, onde e o que aconteceu."
+  too_short: "Preciso de um pouco mais de detalhes sobre o ocorrido. Pode descrever novamente?"
+  registered: "Aviso registrado com sucesso! Seu protocolo é {protocol}."
+documents:
+  request: "Para concluir a abertura, envie pelo clipe de anexos:\n{items}"
+  reminder: "Estou aguardando os documentos. Ainda faltam:\n{items}"
+  pending: "Recebido! Ainda faltam:\n{items}"
+  issues: "Alguns arquivos precisam ser reenviados:\n{issues}"
+  done: "Tudo certo, abertura do sinistro concluída!\nProtocolo: {protocol}\nDocumentos recebidos:\n{received}\nPróximos passos: nossa equipe fará a análise e você receberá as atualizações por aqui."
+  missing_type: "não foi possível identificar o tipo do documento"
+transition:
+  blocked: "Não posso dar continuidade a esta solicitação por este canal."
+  escalated: "Vou transferir seu atendimento para um de nossos especialistas humanos."
+  failed: "Tivemos um problema para concluir esta etapa. Um especialista humano dará continuidade ao seu atendimento."
+system:
+  closed: "Este atendimento já foi encerrado ({stage}).{protocol_info}"
+  output_blocked: "Desculpe, não consegui gerar uma resposta adequada. Um atendente dará continuidade."
