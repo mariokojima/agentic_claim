@@ -1,5 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { api, type AgentEvent, type Metrics, type PauseState, type SyntheticCustomer, wsUrl } from "./api";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  api,
+  closeSafely,
+  type AgentEvent,
+  type Metrics,
+  type PauseState,
+  type SyntheticCustomer,
+  wsUrl,
+} from "./api";
 import { ChatPanel } from "./components/ChatPanel";
 import { EventLog } from "./components/EventLog";
 import { FlowPanel } from "./components/FlowPanel";
@@ -43,7 +51,7 @@ function useEventStream() {
     return () => {
       closed = true;
       window.clearTimeout(retry);
-      ws?.close();
+      closeSafely(ws);
     };
   }, []);
 
@@ -61,7 +69,11 @@ export default function App() {
     setConversationId(conv.conversation_id);
   }, []);
 
+  // O StrictMode executa efeitos 2x em dev: sem esta trava, duas conversas seriam criadas.
+  const bootstrapped = useRef(false);
   useEffect(() => {
+    if (bootstrapped.current) return;
+    bootstrapped.current = true;
     api
       .customers()
       .then((list) => {

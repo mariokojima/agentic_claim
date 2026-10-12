@@ -104,3 +104,18 @@ export function wsUrl(path: string): string {
   const proto = window.location.protocol === "https:" ? "wss" : "ws";
   return `${proto}://${window.location.host}${API}${path}`;
 }
+
+/**
+ * Fecha o WebSocket sem abortar o handshake. Fechar um socket ainda em CONNECTING faz o navegador
+ * derrubar a conexão (ECONNRESET no proxy do Vite) — comum no StrictMode, que monta efeitos 2x.
+ */
+export function closeSafely(ws: WebSocket | null): void {
+  if (!ws) return;
+  ws.onmessage = null;
+  ws.onclose = null;
+  if (ws.readyState === WebSocket.CONNECTING) {
+    ws.onopen = () => ws.close(1000);
+  } else if (ws.readyState === WebSocket.OPEN) {
+    ws.close(1000);
+  }
+}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { api, type ChatMessage, type ConversationState, type UploadedAttachment, wsUrl } from "../api";
+import { api, closeSafely, type ChatMessage, type ConversationState, type UploadedAttachment, wsUrl } from "../api";
 import { DOC_TYPES, STAGE_LABELS } from "../labels";
 
 type Delivery = "sending" | "received" | "read";
@@ -51,7 +51,7 @@ export function ChatPanel({ conversationId }: { conversationId: string | null })
       }
     };
     ws.onclose = () => setBusy(false);
-    return () => ws.close();
+    return () => closeSafely(ws);
   }, [conversationId]);
 
   useEffect(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), [messages]);
