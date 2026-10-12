@@ -24,7 +24,8 @@ def client(tmp_path: Path) -> Iterator[TestClient]:
 def ann(client: TestClient) -> dict[str, Any]:
     customers = client.get("/simulator/customers").json()
     assert len(customers) >= 10
-    return customers[0]  # vigente com colisão
+    first: dict[str, Any] = customers[0]  # vigente com colisão
+    return first
 
 
 def say(
