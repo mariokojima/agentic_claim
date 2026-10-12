@@ -1,5 +1,13 @@
-# Estágios e regras de guardrail (ativáveis por configuração para experimentos).
+# Regras determinísticas de guardrail (Fase 2). Edite à vontade: cada regra pode ser desligada
+# (enabled: false) e tem uma ação: allow | sanitize | block | escalate.
+# Padrões são expressões regulares (Python). "(?i)" = ignora maiúsculas/minúsculas.
+# Classificadores LLM entram na Fase 6.
 enabled: true
+
+# Entrada: `block` recusa só a mensagem e mantém a etapa; após este número de recusas na
+# conversa, ela vai a BLOQUEADO (ADR-0013). `escalate` encaminha a um humano (ESCALADO_HUMANO).
+input_block_limit: 3
+
 stages:
   security:
     enabled: true
@@ -8,23 +16,78 @@ stages:
         prompt_injection:
           enabled: true
           action: block
+          reason: "Tentativa de alterar as instruções do assistente (prompt injection)"
           patterns:
-            - "(?i)ignore (todas )?as instru[cç][oõ]es"
-            - "(?i)ignore (all )?(previous|prior) instructions"
-            - "(?i)voc[eê] agora [eé]"
-            - "(?i)system prompt"
+            - "(?i)\\bignor\\w*\\s+(\\w+\\s+){0,3}(instru[cç]\\w*|regras|orienta[cç]\\w*|diretrizes)"
+            - "(?i)\\b(desconsider|esque[cç])\\w*\\s+(\\w+\\s+){0,3}(instru[cç]\\w*|regras|orienta[cç]\\w*|diretrizes)"
+            - "(?i)\\bignore\\s+(all\\s+|any\\s+)?(previous|prior|above|your)\\s+instructions"
+            - "(?i)\\b(a\\s+partir\\s+de\\s+agora|agora)\\s*,?\\s*voc[eê]\\s+(é|e|será|sera|vai\\s+ser|deve)\\b"
+            - "(?i)\\b(system\\s+prompt|prompt\\s+do\\s+sistema)\\b"
+            - "(?i)\\b(revel|mostr|exib|imprim|repit|list)\\w*\\s+(\\w+\\s+){0,3}(prompt|instru[cç]\\w*\\s+(internas|do\\s+sistema|originais))"
+            - "(?i)\\b(modo\\s+(desenvolvedor|developer|dan|irrestrito)|jailbreak)\\b"
+        credential_exfiltration:
+          enabled: true
+          action: block
+          reason: "Pedido de senhas, credenciais ou dados internos"
+          patterns:
+            - "(?i)\\b(retorn|mostr|list|envi|revel|inform|pass|forne[cç]|d[eêá]|me\\s+d)\\w*\\s+(\\w+\\s+){0,4}(senhas?|passwords?|credenciais|tokens?|chaves?\\s+de\\s+api|api\\s*keys?)\\b"
+            - "(?i)\\b(dados|informa[cç]\\w*|cpf|ap[oó]lices?|endere[cç]os?)\\s+(\\w+\\s+){0,2}de\\s+outros?\\s+(clientes|segurados|usu[aá]rios)\\b"
+            - "(?i)\\b(banco\\s+de\\s+dados|base\\s+de\\s+dados|tabela)\\s+(\\w+\\s+){0,2}(clientes|segurados|usu[aá]rios)\\b"
     output:
       rules:
-        pii_leak:
+        pii_cpf:
           enabled: true
           action: sanitize
+          reason: "CPF completo na resposta foi mascarado"
+          show_match: false
+          mask: cpf
           patterns:
             - "\\b\\d{3}\\.?\\d{3}\\.?\\d{3}-?\\d{2}\\b"
+        prompt_leak:
+          enabled: true
+          action: block
+          reason: "Resposta expõe instruções internas do assistente"
+          patterns:
+            - "(?i)\\b(meu|o)\\s+(system\\s+prompt|prompt\\s+do\\s+sistema)\\b"
+            - "(?i)\\bminhas\\s+instru[cç][oõ]es\\s+(internas|s[aã]o)\\b"
   ethics:
     enabled: true
-    input: {rules: {}}
-    output: {rules: {}}
+    input:
+      rules:
+        biased_request:
+          enabled: true
+          action: block
+          reason: "Pedido de tratamento diferenciado por característica pessoal"
+          patterns:
+            - "(?i)\\b(por\\s+ser|porque\\s+(ele|ela|eu)\\s+(é|e|sou)|s[oó]\\s+porque\\s+[eé])\\s+(mulher|homem|negr[oa]|branc[oa]|nordestin[oa]|idos[oa]|jovem|gay|l[eé]sbica|trans|estrangeir[oa]|imigrante|pobre|deficiente)\\b"
+            - "(?i)\\b(negar|recusar|dificultar|priorizar)\\s+(\\w+\\s+){0,3}(mulheres|negros|nordestinos|idosos|estrangeiros|imigrantes|gays|pobres|deficientes)\\b"
+    output:
+      rules:
+        biased_response:
+          enabled: true
+          action: block
+          reason: "Resposta com tratamento diferenciado por característica pessoal"
+          patterns:
+            - "(?i)\\b(por\\s+ser|por\\s+se\\s+tratar\\s+de)\\s+(mulher|negr[oa]|nordestin[oa]|idos[oa]|estrangeir[oa]|imigrante|pobre|deficiente)\\b"
   corporate:
     enabled: true
-    input: {rules: {}}
-    output: {rules: {}}
+    input:
+      rules:
+        fraud_signals:
+          enabled: true
+          action: escalate
+          reason: "Sinal de possível fraude: encaminhado para análise humana"
+          patterns:
+            - "(?i)\\b(aumentar|inflar|exagerar|aumenta)\\s+(\\w+\\s+){0,2}(valor|danos?|preju[ií]zo|or[cç]amento)\\b"
+            - "(?i)\\b(mudar|alterar|trocar|colocar)\\s+(\\w+\\s+){0,2}data\\s+(\\w+\\s+){0,2}(acidente|batida|evento|sinistro|ocorr[eê]ncia)\\b"
+            - "(?i)\\b(dano|batida|amassado|arranh\\w+)\\s+(\\w+\\s+){0,3}(antes|anterior)\\s+(d[aoe]\\s+)?(contratar|contrata[cç][aã]o|ap[oó]lice|seguro)\\b"
+            - "(?i)\\bn[aã]o\\s+(vou|vamos|quero)\\s+(fazer|registrar|abrir)\\s+(o\\s+)?(bo|boletim)\\b"
+    output:
+      rules:
+        undue_promise:
+          enabled: true
+          action: block
+          reason: "Promessa indevida de cobertura ou indenização"
+          patterns:
+            - "(?i)\\b(garantimos|est[aá]\\s+garantid[oa]|com\\s+certeza\\s+(ser[aá]|vai\\s+ser)\\s+(pago|paga|indenizad[oa]|coberto|coberta))\\b"
+            - "(?i)\\b(indeniza[cç][aã]o|pagamento|cobertura)\\s+(j[aá]\\s+)?(est[aá]\\s+)?aprovad[oa]\\b"
