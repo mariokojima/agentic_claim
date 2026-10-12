@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { api, closeSafely, type ChatMessage, type ConversationState, type UploadedAttachment, wsUrl } from "../api";
-import { DOC_TYPES, STAGE_LABELS } from "../labels";
+import { AUTO_DOC_TYPE, DOC_TYPES, STAGE_LABELS, guessDocType } from "../labels";
 
 type Delivery = "sending" | "received" | "read";
 interface UiMessage extends ChatMessage {
@@ -18,7 +18,7 @@ export function ChatPanel({ conversationId }: { conversationId: string | null })
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [trayOpen, setTrayOpen] = useState(false);
-  const [docType, setDocType] = useState("FOTO_DANO");
+  const [docType, setDocType] = useState(AUTO_DOC_TYPE);
   const [pending, setPending] = useState<UploadedAttachment[]>([]);
   const [error, setError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -88,7 +88,8 @@ export function ChatPanel({ conversationId }: { conversationId: string | null })
     if (!files || !conversationId) return;
     setError(null);
     try {
-      const uploaded = await Promise.all([...files].map((f) => api.upload(conversationId, f, docType)));
+      const typeOf = (f: File) => (docType === AUTO_DOC_TYPE ? guessDocType(f.name) : docType);
+      const uploaded = await Promise.all([...files].map((f) => api.upload(conversationId, f, typeOf(f))));
       setPending((prev) => [...prev, ...uploaded]);
     } catch (e) {
       setError(String(e));

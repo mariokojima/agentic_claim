@@ -72,10 +72,23 @@ export const STAGE_LABELS: Record<string, string> = {
   ESCALADO_HUMANO: "Escalado p/ humano",
 };
 
+export const AUTO_DOC_TYPE = "auto";
+
 export const DOC_TYPES: { value: string; label: string }[] = [
+  { value: AUTO_DOC_TYPE, label: "Detectar pelo nome do arquivo" },
   { value: "CNH", label: "CNH do condutor" },
   { value: "CRLV", label: "CRLV do veículo" },
   { value: "FOTO_DANO", label: "Foto do dano" },
   { value: "BOLETIM_OCORRENCIA", label: "Boletim de ocorrência" },
   { value: "", label: "(sem tipo)" },
 ];
+
+/** Tipo de documento pelo nome do arquivo (ex.: cnh.jpg, crlv.jpg, foto_dano_1.jpg, boletim.jpg). */
+export function guessDocType(filename: string): string {
+  const name = filename.toLowerCase();
+  if (/^cnh|habilita/.test(name)) return "CNH";
+  if (/^crlv|licenciamento/.test(name)) return "CRLV";
+  if (/^(foto|dano)/.test(name)) return "FOTO_DANO";
+  if (/^(bo[_\-. ]|boletim)/.test(name)) return "BOLETIM_OCORRENCIA";
+  return "";
+}
