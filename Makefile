@@ -1,4 +1,4 @@
-.PHONY: install check check-front lint typecheck test fmt seed run dev-front fixtures scenarios
+.PHONY: install check check-front lint typecheck test fmt seed run dev-front fixtures documents scenarios
 
 install:
 	uv sync
@@ -22,6 +22,9 @@ fmt:
 
 fixtures:
 	uv run python scripts/generate_fixtures.py
+
+documents:
+	uv run python scripts/generate_documents.py
 
 seed:
 	uv run python scripts/seed.py

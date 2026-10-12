@@ -28,6 +28,7 @@ packages = ["src/claims_agents"]
 dev = [
     "httpx>=0.28.1",
     "mypy>=2.4.0",
+    "pillow>=12.3.0",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "ruff>=0.17.0",
@@ -45,6 +46,7 @@ ignore = ["RUF001", "RUF002", "RUF003"]  # acentos em pt-BR
 
 [tool.ruff.lint.per-file-ignores]
 "scripts/generate_fixtures.py" = ["E501"]
+"scripts/generate_documents.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"

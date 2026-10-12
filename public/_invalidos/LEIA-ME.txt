@@ -1,0 +1,7 @@
+Arquivos para testar a complementação de documentos:
+- foto_dano_muito_pequena.jpg: recusada por tamanho mínimo (< 1 KB)
+- foto_dano_formato_invalido.gif: recusada por formato (GIF)
+- Enviar a mesma foto duas vezes: recusada como duplicada
+- Anexo sem tipo (nome não reconhecido): pedido de reenvio
+Obs.: CPF e placa NÃO são lidos da imagem (sem OCR); a API simula esses metadados
+a partir da conversa. Por isso documentos de outro CPF não são recusados.
