@@ -50,3 +50,14 @@ def test_input_guardrail_overrides(decision: str, expected: ClaimStage) -> None:
 def test_hop_limit_escalates() -> None:
     out = decide_transition(ClaimStage.TRIAGEM, res("completed"), "allow", hops=5, max_hops=5)
     assert out.new_stage == ClaimStage.ESCALADO_HUMANO and out.terminal_reason == "max_hops"
+
+
+def test_block_below_limit_refuses_and_keeps_stage() -> None:
+    out = decide_transition(ClaimStage.AVISO, None, "block", 0, 5, input_blocks=0, block_limit=3)
+    assert out.new_stage == ClaimStage.AVISO and not out.changed(ClaimStage.AVISO)
+    assert out.message_key == "transition.refused" and out.reask
+
+
+def test_block_at_limit_goes_to_bloqueado() -> None:
+    out = decide_transition(ClaimStage.AVISO, None, "block", 0, 5, input_blocks=2, block_limit=3)
+    assert out.new_stage == ClaimStage.BLOQUEADO and out.terminal_reason == "guardrail_block"

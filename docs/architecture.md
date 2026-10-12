@@ -43,14 +43,14 @@ orchestrator ◄──────────── etapa concluída (hops < ma
 | DOCUMENTOS | documents | CONCLUIDO | — |
 
 `failed` (erro técnico não recuperável ou tentativas esgotadas) leva a `ESCALADO_HUMANO`.
-Veredito `block` leva a `BLOQUEADO`; `escalate`, a `ESCALADO_HUMANO`.
+Veredito `block` na entrada recusa a mensagem e mantém a etapa; na 3ª recusa (`input_block_limit`) leva a `BLOQUEADO` (ADR-0013). `escalate` leva a `ESCALADO_HUMANO`.
 
 ## 3. Componentes
 
 **Guardrails** (`agents/guardrails/`): três estágios em paralelo (Segurança, Ética, Corporativo)
 e um agregador. Camadas: regras determinísticas (regex de CPF, padrões de injection) e depois
-classificador LLM com saída estruturada (Fase 6). Estágios ligados/desligados em
-`configs/guardrails.yaml`. Precedência do agregador: `block > escalate > sanitize > allow`.
+classificador LLM com saída estruturada (Fase 6). Regras (regex), ações e estágios são
+ligados/desligados em `configs/guardrails.yaml`; motor em `agents/guardrails/rules.py`. Precedência do agregador: `block > escalate > sanitize > allow`.
 
 | Estágio | Entrada (usuário) | Saída (LLM) |
 |---|---|---|

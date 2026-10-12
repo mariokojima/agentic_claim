@@ -102,7 +102,11 @@ class MainNodes:
     # --- guardrails -----------------------------------------------------------------------------
 
     async def _check(
-        self, direction: Literal["input", "output"], text: str, state: GlobalState
+        self,
+        direction: Literal["input", "output"],
+        text: str,
+        state: GlobalState,
+        attachments_text: str = "",
     ) -> GuardrailVerdict:
         out = await self.guardrails.ainvoke(
             GuardrailGraphState(
@@ -111,6 +115,7 @@ class MainNodes:
                 context={
                     "stage": state.claim_stage.value,
                     "conversation_id": state.conversation_id,
+                    "attachments_text": attachments_text,
                 },
             )
         )
@@ -118,7 +123,17 @@ class MainNodes:
 
     async def guardrails_in(self, state: GlobalState) -> dict[str, Any]:
         inbound = state.inbound
-        verdict = await self._check("input", inbound.text if inbound else "", state)
+        attachments_text = (
+            " ".join(
+                f"{a.filename} " + " ".join(str(v) for v in a.metadata.values())
+                for a in inbound.attachments
+            )
+            if inbound
+            else ""
+        )
+        verdict = await self._check(
+            "input", inbound.text if inbound else "", state, attachments_text=attachments_text
+        )
         updates: dict[str, Any] = {
             "guardrail_verdicts": [verdict],
             "turn_input_decision": verdict.decision,
@@ -239,8 +254,19 @@ class MainNodes:
             state.turn_input_decision,
             state.hops,
             self.deps.settings.graph.max_hops_per_turn,
+            input_blocks=state.input_blocks,
+            block_limit=int(self.deps.guardrails_config.get("input_block_limit", 3)),
         )
         updates: dict[str, Any] = {"route": outcome.next_node}
+        if state.turn_input_decision == "block":
+            updates["input_blocks"] = state.input_blocks + 1
+            if not outcome.changed(state.claim_stage):
+                emit(
+                    "input_refused",
+                    status="warning",
+                    details=outcome.reason,
+                    data={"input_blocks": state.input_blocks + 1},
+                )
         if outcome.changed(state.claim_stage):
             updates |= {
                 "claim_stage": outcome.new_stage,
@@ -264,13 +290,20 @@ class MainNodes:
                 },
             )
         if outcome.message_key:
-            updates["outbox"] = [
-                *state.outbox,
-                OutboxMessage(
-                    text=self.deps.messages.get(outcome.message_key), source="transition"
-                ),
-            ]
+            text = self.deps.messages.get(outcome.message_key)
+            if outcome.reask:
+                text = f"{text}\n\n{self._pending_question(state)}"
+            updates["outbox"] = [*state.outbox, OutboxMessage(text=text, source="transition")]
         return updates
+
+    def _pending_question(self, state: GlobalState) -> str:
+        """Última pergunta feita ao cliente (para retomar após uma recusa)."""
+        refused = self.deps.messages.get("transition.refused")
+        for msg in reversed(state.messages):
+            if msg.role == "assistant" and state.awaiting is not None:
+                # recusas seguidas: não repetir o prefixo de recusa da mensagem anterior
+                return msg.text.removeprefix(refused).strip()
+        return self.deps.messages.get("transition.resume_default")
 
     # --- envio (único ponto que chama send_whatsapp) --------------------------------------------
 

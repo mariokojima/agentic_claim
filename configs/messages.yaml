@@ -15,7 +15,9 @@ documents:
   done: "Tudo certo, abertura do sinistro concluída!\nProtocolo: {protocol}\nDocumentos recebidos:\n{received}\nPróximos passos: nossa equipe fará a análise e você receberá as atualizações por aqui."
   missing_type: "não foi possível identificar o tipo do documento"
 transition:
-  blocked: "Não posso dar continuidade a esta solicitação por este canal."
+  refused: "Desculpe, não posso atender a esse pedido por este canal. Vamos continuar de onde paramos:"
+  resume_default: "Como posso ajudar com o seu sinistro? Para começar, me conte o que aconteceu."
+  blocked: "Não posso dar continuidade a esta solicitação por este canal. O atendimento foi encerrado."
   escalated: "Vou transferir seu atendimento para um de nossos especialistas humanos."
   failed: "Tivemos um problema para concluir esta etapa. Um especialista humano dará continuidade ao seu atendimento."
 system:

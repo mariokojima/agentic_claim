@@ -128,3 +128,4 @@ class GlobalState(BaseModel):
     last_result: StageResult | None = None
     turn_input_decision: GuardrailDecision | None = None
     turns: int = 0
+    input_blocks: int = 0  # mensagens recusadas pelo guardrail de entrada (ADR-0013)

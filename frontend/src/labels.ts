@@ -27,6 +27,7 @@ export const EVENT_LABELS: Record<string, string> = {
   flow_started: "Conversa iniciada",
   message_received: "Mensagem recebida",
   guardrail_verdict: "Veredito de guardrail",
+  input_refused: "Mensagem recusada",
   route: "Roteamento",
   intent_classified: "Intenção classificada",
   tool_start: "Início de tool",
