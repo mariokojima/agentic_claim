@@ -3,6 +3,7 @@ import { Background, ReactFlow, useNodesState } from "@xyflow/react";
 import { AgentNode, type AgentNodeType } from "../flow/AgentNode";
 import { baseEdges, baseNodes } from "../flow/graph";
 import type { NodeState } from "../flow/status";
+import { useFadeCompleted } from "../flow/useFadeCompleted";
 import { STATUS_LABELS, TOOL_LABELS } from "../labels";
 
 const nodeTypes = { agent: AgentNode };
@@ -15,7 +16,9 @@ const TOOL_ICONS: Record<string, string> = {
   send_whatsapp: "💬",
 };
 
-export function FlowPanel({ statuses }: { statuses: Record<string, NodeState> }) {
+export function FlowPanel({ statuses: rawStatuses }: { statuses: Record<string, NodeState> }) {
+  // Verde (concluído) volta à cor original após FADE_COMPLETED_MS; atenção/erro permanecem.
+  const statuses = useFadeCompleted(rawStatuses);
   // Nós controlados: atualizar só `data` preserva as medidas internas do React Flow. Recriar os
   // objetos a cada evento fazia os nós ficarem ocultos (sem medida) quando o tamanho não mudava.
   const [nodes, setNodes, onNodesChange] = useNodesState<AgentNodeType>(baseNodes);
