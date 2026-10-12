@@ -49,7 +49,10 @@ def emit(
 
 
 def tool_observer(record: ToolCallRecord) -> None:
-    """Observer do `ResilientTool`: converte cada chamada de tool em evento `tool_call`."""
+    """Observer do `ResilientTool`: emite `tool_start` (processando) e `tool_call` (resultado)."""
+    if record.status == "processing":
+        emit("tool_start", tool=record.tool, status="processing", details="Executando…")
+        return
     details = f"{record.attempts} tentativa(s)"
     if record.error:
         details += f" — {record.error}"

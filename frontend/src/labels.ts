@@ -29,6 +29,7 @@ export const EVENT_LABELS: Record<string, string> = {
   guardrail_verdict: "Veredito de guardrail",
   route: "Roteamento",
   intent_classified: "Intenção classificada",
+  tool_start: "Início de tool",
   tool_call: "Chamada de tool",
   stage_result: "Resultado da etapa",
   stage_transition: "Transição de etapa",

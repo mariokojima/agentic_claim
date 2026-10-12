@@ -13,3 +13,4 @@
 | [0009](0009-checklist-documentos.md) | Checklist de documentos | proposto [CONFIRMAR] |
 | [0010](0010-correcao-sem-regressao.md) | Correção sem regressão de etapa | proposto [CONFIRMAR] |
 | [0011](0011-eventos-fonte-unica.md) | Eventos via fonte única | aceito |
+| [0012](0012-modo-demonstracao.md) | Modo demonstração (atraso ilustrativo) | aceito |

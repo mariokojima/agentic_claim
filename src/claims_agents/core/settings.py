@@ -52,6 +52,13 @@ class MetricsSettings(BaseModel):
 ToolImpl = Literal["mock", "real"]
 
 
+class DemoSettings(BaseModel):
+    """Atrasos ilustrativos para visualizar o fluxo no painel. Manter 0 em testes e experimentos."""
+
+    node_delay_ms: int = 0
+    tool_delay_ms: int = 0
+
+
 class ToolsSettings(BaseModel):
     default_timeout_s: float = 5.0
     max_retries: int = 2
@@ -76,6 +83,7 @@ class Settings(BaseSettings):
     pause: PauseSettings = Field(default_factory=PauseSettings)
     metrics: MetricsSettings = Field(default_factory=MetricsSettings)
     tools: ToolsSettings = Field(default_factory=ToolsSettings)
+    demo: DemoSettings = Field(default_factory=DemoSettings)
 
     @classmethod
     def settings_customise_sources(

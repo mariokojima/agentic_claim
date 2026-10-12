@@ -69,6 +69,7 @@ def build_registry(
         timeout_s=settings.tools.default_timeout_s,
         max_retries=settings.tools.max_retries,
         backoff_base_s=settings.tools.backoff_base_s,
+        demo_delay_s=settings.demo.tool_delay_ms / 1000,
     )
     tools: dict[str, Any] = {}
     for name in TOOL_NAMES:

@@ -26,8 +26,13 @@ fixtures:
 seed:
 	uv run python scripts/seed.py
 
+# Modo demonstração: atraso por caixa do grafo para visualizar o fluxo (DEMO_DELAY_MS=0 desliga).
+DEMO_DELAY_MS ?= 500
+DEMO_TOOL_DELAY_MS ?= 400
+
 run: seed
-	uv run uvicorn claims_agents.api.app:app --reload --port 8000
+	CLAIMS_DEMO__NODE_DELAY_MS=$(DEMO_DELAY_MS) CLAIMS_DEMO__TOOL_DELAY_MS=$(if $(filter 0,$(DEMO_DELAY_MS)),0,$(DEMO_TOOL_DELAY_MS)) \
+		uv run uvicorn claims_agents.api.app:app --reload --port 8000
 
 check-front:
 	cd frontend && npm run build

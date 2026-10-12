@@ -19,7 +19,7 @@ make check-front        # tsc (estrito) + vite build do frontend
 make test               # pytest -q
 make fmt                # ruff format + ruff check --fix
 make seed               # carrega fixtures sintéticos no SQLite (data/claims.db)
-make run                # API FastAPI em http://localhost:8000
+make run                # API em http://localhost:8000, em modo demonstração (DEMO_DELAY_MS=0 desliga; ADR-0012)
 make dev-front          # frontend Vite em http://localhost:5173 (proxy /api → API)
 make scenarios          # runner de cenários de avaliação (Fase 6)
 ```

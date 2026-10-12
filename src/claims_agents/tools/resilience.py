@@ -16,7 +16,7 @@ from claims_agents.core.errors import ToolError, ToolTimeout
 @dataclass(frozen=True)
 class ToolCallRecord:
     tool: str
-    status: Literal["completed", "warning", "error"]
+    status: Literal["processing", "completed", "warning", "error"]
     latency_ms: int
     attempts: int
     error: str | None = None
@@ -30,6 +30,7 @@ class RetryPolicy:
     timeout_s: float = 5.0
     max_retries: int = 2
     backoff_base_s: float = 0.2
+    demo_delay_s: float = 0.0  # atraso ilustrativo (modo demonstração), fora do timeout
 
 
 class ResilientTool[Req: BaseModel, Resp: BaseModel]:
@@ -49,6 +50,9 @@ class ResilientTool[Req: BaseModel, Resp: BaseModel]:
 
     async def __call__(self, req: Req) -> Resp:
         start = time.perf_counter()
+        self._notify("processing", start, 0)
+        if self.policy.demo_delay_s > 0:
+            await asyncio.sleep(self.policy.demo_delay_s)
         attempt = 0
         while True:
             attempt += 1
@@ -68,7 +72,7 @@ class ResilientTool[Req: BaseModel, Resp: BaseModel]:
 
     def _notify(
         self,
-        status: Literal["completed", "warning", "error"],
+        status: Literal["processing", "completed", "warning", "error"],
         start: float,
         attempts: int,
         error: ToolError | None = None,

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import type { AgentEvent } from "../api";
 import { AGENT_LABELS, EVENT_LABELS, STATUS_LABELS, TOOL_LABELS } from "../labels";
 
-const NODE_EVENTS = new Set(["node_start", "node_end", "subagent_end"]);
+const NODE_EVENTS = new Set(["node_start", "node_end", "subagent_end", "tool_start"]);
 const STATUS_ICON: Record<string, string> = { completed: "✔", processing: "◌", warning: "⚠", error: "✖" };
 
 function time(ts: string) {
@@ -37,7 +37,7 @@ export function EventLog({ events, conversationId }: { events: AgentEvent[]; con
         </label>
         <label>
           <input type="checkbox" checked={showNodes} onChange={(e) => setShowNodes(e.target.checked)} /> Mostrar
-          início/fim de nós
+          início/fim de nós e tools
         </label>
       </div>
       <div className="event-table-wrap">

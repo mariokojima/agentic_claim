@@ -13,7 +13,7 @@ export function deriveStatuses(events: AgentEvent[]): Record<string, NodeState> 
     if (ev.event === "node_start" && ev.agent === "receive") {
       for (const key of Object.keys(states)) delete states[key];
     }
-    if (ev.event === "tool_call" && ev.tool) {
+    if ((ev.event === "tool_call" || ev.event === "tool_start") && ev.tool) {
       states[`tool:${ev.tool}`] = { status: ev.status, detail: ev.details };
       continue;
     }
