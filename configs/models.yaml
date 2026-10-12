@@ -1,0 +1,13 @@
+# Modelos por papel (ADR-0002). Inicialmente todos os papéis usam o mesmo modelo.
+default:
+  provider: anthropic        # anthropic | fake
+  model: claude-opus-5-5
+  temperature: 0.0
+  max_tokens: 1024
+  timeout_s: 30
+roles:
+  guardrail_classifier: {}   # herda de default
+  extraction: {}
+  writer: {}
+  intent: {}
+# Provedor falso para testes: provider: fake, responses: ["..."]

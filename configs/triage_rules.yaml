@@ -1,0 +1,18 @@
+# Regras mínimas da Triagem (ADR-0008) — proposta para revisão do autor.
+required_fields:
+  - {name: cpf, prompt: "Para começar, poderia me informar o CPF do titular da apólice?"}
+  - {name: event_type, prompt: "O que aconteceu? Descreva brevemente o ocorrido."}
+  - {name: event_date, prompt: "Em que data aconteceu? (dd/mm/aaaa)"}
+eligibility:
+  accepted_event_types: [COLISAO]
+  required_policy_status: ATIVA
+  required_coverage: COLISAO
+  event_must_be_within_policy_term: true
+rejection_messages:
+  customer_not_found: "Não localizamos uma apólice com esses dados. Por favor, entre em contato com seu corretor."
+  policy_not_active: "Sua apólice não está ativa no momento, por isso não é possível abrir o aviso por aqui. Seu corretor poderá orientar os próximos passos."
+  outside_policy_term: "A data do evento está fora da vigência da apólice. Seu corretor poderá orientar os próximos passos."
+  no_coverage: "Sua apólice não possui cobertura de colisão. Seu corretor poderá orientar sobre outras opções."
+  event_type_out_of_scope: "Neste canal atendemos apenas avisos de colisão. Para outros eventos, entre em contato com a central."
+urgency:
+  high_if_any: [has_injuries, blocking_traffic, third_party_injuries]

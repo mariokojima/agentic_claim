@@ -1,0 +1,27 @@
+# Configuração geral da PoC. Valores podem ser sobrescritos por env (prefixo CLAIMS_, aninhamento com __).
+data_dir: data
+graph:
+  max_hops_per_turn: 5
+orchestrator:
+  intent_llm_enabled: false
+triage:
+  max_attempts_per_field: 3
+  inactivity_timeout_minutes: 60
+documents:
+  complement_timeout_hours: 72
+pause:
+  handoff_message: "Seu atendimento foi transferido para um de nossos especialistas humanos. Em breve alguém dará continuidade por aqui."
+metrics:
+  success_terminal_states: [CONCLUIDO, ORIENTADO]
+  count_open_flows: false
+  active_window_minutes: 60
+tools:
+  default_timeout_s: 5.0
+  max_retries: 2
+  backoff_base_s: 0.2
+  impl:
+    get_customer_data: mock
+    send_whatsapp: mock
+    open_claim: mock
+    store_files: mock
+    validate_document: mock

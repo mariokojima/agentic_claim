@@ -1,0 +1,30 @@
+# Estágios e regras de guardrail (ativáveis por configuração para experimentos).
+enabled: true
+stages:
+  security:
+    enabled: true
+    input:
+      rules:
+        prompt_injection:
+          enabled: true
+          action: block
+          patterns:
+            - "(?i)ignore (todas )?as instru[cç][oõ]es"
+            - "(?i)ignore (all )?(previous|prior) instructions"
+            - "(?i)voc[eê] agora [eé]"
+            - "(?i)system prompt"
+    output:
+      rules:
+        pii_leak:
+          enabled: true
+          action: sanitize
+          patterns:
+            - "\\b\\d{3}\\.?\\d{3}\\.?\\d{3}-?\\d{2}\\b"
+  ethics:
+    enabled: true
+    input: {rules: {}}
+    output: {rules: {}}
+  corporate:
+    enabled: true
+    input: {rules: {}}
+    output: {rules: {}}
