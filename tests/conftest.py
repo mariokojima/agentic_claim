@@ -9,6 +9,7 @@ import pytest
 
 from claims_agents.core.settings import PROJECT_ROOT, Settings, ToolsSettings
 from claims_agents.domain import Customer, Policy
+from claims_agents.observability.emit import tool_observer
 from claims_agents.tools.mocks.db import DomainDB, load_fixtures
 from claims_agents.tools.mocks.faults import FaultInjector
 from claims_agents.tools.registry import ToolRegistry, build_registry
@@ -57,7 +58,11 @@ def registry(
     faults: FaultInjector,
     tool_calls: list[ToolCallRecord],
 ) -> ToolRegistry:
-    return build_registry(settings, faults=faults, observer=tool_calls.append)
+    def observer(record: ToolCallRecord) -> None:
+        tool_calls.append(record)
+        tool_observer(record)  # também emite `tool_call` quando dentro do grafo
+
+    return build_registry(settings, faults=faults, observer=observer)
 
 
 @pytest.fixture
