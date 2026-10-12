@@ -147,7 +147,10 @@ class AgentEvent(BaseModel):
 | GET | `/events` | eventos persistidos (filtro por conversa) |
 | GET | `/metrics` | KPIs |
 | POST | `/control/pause` | pausa global ou por conversa |
-| POST | `/conversations/{id}/attachments` | upload de anexo (retorna referência usada na próxima mensagem) |
+| POST | `/conversations/{id}/attachments` | upload de anexo (retorna referência usada na próxima mensagem); `simulate_metadata` preenche CPF/placa/data sintéticos, simulando OCR/EXIF |
+| GET | `/conversations/{id}` | estado resumido e histórico |
+| POST | `/conversations/{id}/messages` | alternativa REST ao WebSocket (testes e runner de cenários) |
+| GET | `/simulator/customers` | clientes sintéticos para o simulador |
 
 ## 8. Persistência
 

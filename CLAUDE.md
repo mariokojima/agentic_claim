@@ -15,11 +15,12 @@ Fontes de verdade (não reler `docs/00-briefing.md`; use estes):
 ```bash
 uv sync                 # instala dependências (Python 3.12, lockfile uv.lock)
 make check              # ruff check + ruff format --check + mypy + pytest -q  (deve passar ao fim de cada fase)
+make check-front        # tsc (estrito) + vite build do frontend
 make test               # pytest -q
 make fmt                # ruff format + ruff check --fix
 make seed               # carrega fixtures sintéticos no SQLite (data/claims.db)
 make run                # API FastAPI em http://localhost:8000
-make dev-front          # frontend Vite em http://localhost:5173 (proxy para a API)
+make dev-front          # frontend Vite em http://localhost:5173 (proxy /api → API)
 make scenarios          # runner de cenários de avaliação (Fase 6)
 ```
 
@@ -28,7 +29,8 @@ Rodar um teste: `uv run pytest -q tests/unit/tools/test_customer_data.py -k not_
 ## Layout
 
 ```
-configs/      models.yaml, settings.yaml, guardrails.yaml, triage_rules.yaml, documents_checklist.yaml
+configs/      models.yaml, settings.yaml, guardrails.yaml, triage_rules.yaml, documents_checklist.yaml,
+              messages.yaml (textos determinísticos ao cliente)
 prompts/      prompts versionados (espelham agents/)
 data/         fixtures/ (clientes, apólices) · evaluation/ (cenários)
 src/claims_agents/

@@ -1,4 +1,4 @@
-.PHONY: install check lint typecheck test fmt seed run dev-front fixtures scenarios
+.PHONY: install check check-front lint typecheck test fmt seed run dev-front fixtures scenarios
 
 install:
 	uv sync
@@ -28,6 +28,9 @@ seed:
 
 run: seed
 	uv run uvicorn claims_agents.api.app:app --reload --port 8000
+
+check-front:
+	cd frontend && npm run build
 
 dev-front:
 	cd frontend && npm run dev
