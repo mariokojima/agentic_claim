@@ -54,7 +54,10 @@ export function ChatPanel({ conversationId }: { conversationId: string | null })
     return () => closeSafely(ws);
   }, [conversationId]);
 
-  useEffect(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), [messages]);
+  useEffect(() => {
+    // Corpo em bloco: no Chrome recente scrollIntoView retorna Promise, que o React trataria como cleanup.
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const send = () => {
     const ws = wsRef.current;
