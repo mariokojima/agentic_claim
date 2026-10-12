@@ -1,6 +1,6 @@
-import { useMemo } from "react";
-import { Background, ReactFlow } from "@xyflow/react";
-import { AgentNode } from "../flow/AgentNode";
+import { useEffect, useMemo } from "react";
+import { Background, ReactFlow, useNodesState } from "@xyflow/react";
+import { AgentNode, type AgentNodeType } from "../flow/AgentNode";
 import { baseEdges, baseNodes } from "../flow/graph";
 import type { NodeState } from "../flow/status";
 import { STATUS_LABELS, TOOL_LABELS } from "../labels";
@@ -16,10 +16,12 @@ const TOOL_ICONS: Record<string, string> = {
 };
 
 export function FlowPanel({ statuses }: { statuses: Record<string, NodeState> }) {
-  const nodes = useMemo(
-    () => baseNodes.map((n) => ({ ...n, data: { ...n.data, state: statuses[n.id] } })),
-    [statuses],
-  );
+  // Nós controlados: atualizar só `data` preserva as medidas internas do React Flow. Recriar os
+  // objetos a cada evento fazia os nós ficarem ocultos (sem medida) quando o tamanho não mudava.
+  const [nodes, setNodes, onNodesChange] = useNodesState<AgentNodeType>(baseNodes);
+  useEffect(() => {
+    setNodes((prev) => prev.map((n) => ({ ...n, data: { ...n.data, state: statuses[n.id] } })));
+  }, [statuses, setNodes]);
   const edges = useMemo(
     () =>
       baseEdges.map((edge) => ({
@@ -35,6 +37,7 @@ export function FlowPanel({ statuses }: { statuses: Record<string, NodeState> })
         <div className="section-label">Agentes</div>
         <ReactFlow
           nodes={nodes}
+          onNodesChange={onNodesChange}
           edges={edges}
           nodeTypes={nodeTypes}
           fitView
