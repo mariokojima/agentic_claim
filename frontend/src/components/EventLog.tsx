@@ -5,6 +5,14 @@ import { AGENT_LABELS, EVENT_LABELS, STATUS_LABELS, TOOL_LABELS } from "../label
 const NODE_EVENTS = new Set(["node_start", "node_end", "subagent_end", "tool_start"]);
 const STATUS_ICON: Record<string, string> = { completed: "✔", processing: "◌", warning: "⚠", error: "✖" };
 
+/** Eventos de detecção pelo guardrail (destacados em vermelho no log). */
+function isGuardrailAlert(ev: AgentEvent): boolean {
+  if (ev.event === "guardrail_verdict") return ev.data.decision !== "allow";
+  if (ev.event === "input_refused") return true;
+  if (ev.event === "stage_transition") return ev.data.to === "BLOQUEADO" || ev.data.to === "ESCALADO_HUMANO";
+  return false;
+}
+
 function time(ts: string) {
   const d = new Date(ts);
   return `${d.toLocaleTimeString("pt-BR", { hour12: false })}.${String(d.getMilliseconds()).padStart(3, "0").slice(0, 1)}`;
@@ -53,7 +61,7 @@ export function EventLog({ events, conversationId }: { events: AgentEvent[]; con
           </thead>
           <tbody>
             {rows.map((ev) => (
-              <tr key={ev.id}>
+              <tr key={ev.id} className={isGuardrailAlert(ev) ? "row-alert" : undefined}>
                 <td className="mono">{time(ev.ts)}</td>
                 <td>{agentLabel(ev)}</td>
                 <td>

@@ -7,7 +7,10 @@
   --green: #22a55b;
   --blue: #2f7ff0;
   --orange: #f26a2e;
-  --amber: #e0a100;
+  /* Alertas (atenção) em vermelho para sinalizar perigo; erro usa o mesmo tom. */
+  --alert: #d93c3c;
+  --alert-bg: #fdecec;
+  --alert-text: #a51d1d;
   --red: #d93c3c;
   --idle: #b7c0cc;
   --wa-bg: #ece5dd;
@@ -96,13 +99,13 @@ button { font: inherit; cursor: pointer; }
 .agent-node-title { font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 7px; }
 .agent-node-detail { color: var(--muted); font-size: 11px; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .agent-node.status-processing { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(47, 127, 240, 0.15); }
-.agent-node.status-warning { border-color: var(--amber); }
+.agent-node.status-warning { border-color: var(--alert); }
 .agent-node.status-error { border-color: var(--red); }
 .agent-node .react-flow__handle { opacity: 0; }
 .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
 .dot-completed { background: var(--green); }
 .dot-processing { background: var(--blue); animation: pulse 1s infinite; }
-.dot-warning { background: var(--amber); }
+.dot-warning { background: var(--alert); }
 .dot-error { background: var(--red); }
 .dot-idle { background: var(--idle); }
 @keyframes pulse { 50% { opacity: 0.35; } }
@@ -112,7 +115,7 @@ button { font: inherit; cursor: pointer; }
 
 .tool-card { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; }
 .tool-card.status-processing { border-color: var(--blue); }
-.tool-card.status-warning { border-color: var(--amber); }
+.tool-card.status-warning { border-color: var(--alert); }
 .tool-card.status-error { border-color: var(--red); }
 .tool-icon { width: 32px; height: 32px; border-radius: 8px; background: #f1f3f6; display: grid; place-items: center; }
 .tool-label { font-weight: 600; font-size: 13px; }
@@ -132,8 +135,16 @@ button { font: inherit; cursor: pointer; }
 .status { white-space: nowrap; font-weight: 500; }
 .status-completed { color: var(--green); }
 .status-processing { color: var(--blue); }
-.status-warning { color: var(--amber); }
+.status-warning { color: var(--alert); }
 .status-error { color: var(--red); }
+.agent-node.status-warning .agent-node-title, .agent-node.status-error .agent-node-title { color: var(--alert-text); }
+.agent-node.status-warning, .agent-node.status-error { background: var(--alert-bg); }
+.tool-card.status-warning, .tool-card.status-error { background: var(--alert-bg); }
+
+/* Linhas do log com detecção de guardrail */
+.event-table tr.row-alert td { background: var(--alert-bg); color: var(--alert-text); font-weight: 500; }
+.event-table tr.row-alert td:first-child { box-shadow: inset 4px 0 0 var(--alert); }
+.event-table tr.row-alert .latency { color: var(--alert-text); }
 
 @media (max-width: 1100px) {
   .app { height: auto; min-height: 100vh; overflow: visible; }
