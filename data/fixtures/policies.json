@@ -1,0 +1,267 @@
+[
+  {
+    "number": "AUTO-0001-01",
+    "customer_id": "CUST-0001",
+    "status": "ATIVA",
+    "start_date": "2026-01-15",
+    "end_date": "2027-01-14",
+    "coverages": [
+      "COLISAO",
+      "ROUBO_FURTO",
+      "INCENDIO",
+      "TERCEIROS",
+      "VIDROS",
+      "ASSISTENCIA_24H"
+    ],
+    "vehicle": {
+      "plate": "SNT1A23",
+      "model": "Onix 1.0",
+      "year": 2022
+    },
+    "_note": "vigente, caminho feliz"
+  },
+  {
+    "number": "AUTO-0002-01",
+    "customer_id": "CUST-0002",
+    "status": "ATIVA",
+    "start_date": "2026-03-01",
+    "end_date": "2027-02-28",
+    "coverages": [
+      "COLISAO",
+      "ROUBO_FURTO",
+      "INCENDIO",
+      "TERCEIROS",
+      "VIDROS",
+      "ASSISTENCIA_24H"
+    ],
+    "vehicle": {
+      "plate": "TST2B34",
+      "model": "HB20 1.6",
+      "year": 2021
+    },
+    "_note": "vigente, caminho feliz"
+  },
+  {
+    "number": "AUTO-0003-01",
+    "customer_id": "CUST-0003",
+    "status": "VENCIDA",
+    "start_date": "2025-01-01",
+    "end_date": "2025-12-31",
+    "coverages": [
+      "COLISAO",
+      "ROUBO_FURTO",
+      "INCENDIO",
+      "TERCEIROS",
+      "VIDROS",
+      "ASSISTENCIA_24H"
+    ],
+    "vehicle": {
+      "plate": "FIC3C45",
+      "model": "Gol 1.0",
+      "year": 2018
+    },
+    "_note": "apólice vencida"
+  },
+  {
+    "number": "AUTO-0004-01",
+    "customer_id": "CUST-0004",
+    "status": "ATIVA",
+    "start_date": "2026-02-10",
+    "end_date": "2027-02-09",
+    "coverages": [
+      "ROUBO_FURTO",
+      "INCENDIO",
+      "VIDROS",
+      "ASSISTENCIA_24H"
+    ],
+    "vehicle": {
+      "plate": "MCK4D56",
+      "model": "Kwid 1.0",
+      "year": 2023
+    },
+    "_note": "sem cobertura de colisão"
+  },
+  {
+    "number": "AUTO-0005-01",
+    "customer_id": "CUST-0005",
+    "status": "CANCELADA",
+    "start_date": "2026-01-01",
+    "end_date": "2026-12-31",
+    "coverages": [
+      "COLISAO",
+      "ROUBO_FURTO",
+      "INCENDIO",
+      "TERCEIROS",
+      "VIDROS",
+      "ASSISTENCIA_24H"
+    ],
+    "vehicle": {
+      "plate": "EXP5E67",
+      "model": "Argo 1.3",
+      "year": 2022
+    },
+    "_note": "apólice cancelada"
+  },
+  {
+    "number": "AUTO-0006-01",
+    "customer_id": "CUST-0006",
+    "status": "VENCIDA",
+    "start_date": "2024-06-01",
+    "end_date": "2025-05-31",
+    "coverages": [
+      "COLISAO",
+      "ROUBO_FURTO",
+      "INCENDIO",
+      "TERCEIROS",
+      "VIDROS",
+      "ASSISTENCIA_24H"
+    ],
+    "vehicle": {
+      "plate": "SIM6F78",
+      "model": "Corolla 2.0",
+      "year": 2019
+    },
+    "_note": "múltiplas apólices (uma vencida, uma vigente)"
+  },
+  {
+    "number": "AUTO-0006-02",
+    "customer_id": "CUST-0006",
+    "status": "ATIVA",
+    "start_date": "2025-06-01",
+    "end_date": "2026-12-31",
+    "coverages": [
+      "COLISAO",
+      "ROUBO_FURTO",
+      "INCENDIO",
+      "TERCEIROS",
+      "VIDROS",
+      "ASSISTENCIA_24H"
+    ],
+    "vehicle": {
+      "plate": "SIM6F78",
+      "model": "Corolla 2.0",
+      "year": 2019
+    },
+    "_note": "múltiplas apólices (uma vencida, uma vigente)"
+  },
+  {
+    "number": "AUTO-0007-01",
+    "customer_id": "CUST-0007",
+    "status": "SUSPENSA",
+    "start_date": "2026-01-01",
+    "end_date": "2026-12-31",
+    "coverages": [
+      "COLISAO",
+      "ROUBO_FURTO",
+      "INCENDIO",
+      "TERCEIROS",
+      "VIDROS",
+      "ASSISTENCIA_24H"
+    ],
+    "vehicle": {
+      "plate": "DEM7G89",
+      "model": "T-Cross 1.0",
+      "year": 2024
+    },
+    "_note": "apólice suspensa"
+  },
+  {
+    "number": "AUTO-0008-01",
+    "customer_id": "CUST-0008",
+    "status": "ATIVA",
+    "start_date": "2026-11-01",
+    "end_date": "2027-10-31",
+    "coverages": [
+      "COLISAO",
+      "ROUBO_FURTO",
+      "INCENDIO",
+      "TERCEIROS",
+      "VIDROS",
+      "ASSISTENCIA_24H"
+    ],
+    "vehicle": {
+      "plate": "TST8H90",
+      "model": "Compass 1.3",
+      "year": 2025
+    },
+    "_note": "vigência futura"
+  },
+  {
+    "number": "AUTO-0010-01",
+    "customer_id": "CUST-0010",
+    "status": "ATIVA",
+    "start_date": "2026-04-01",
+    "end_date": "2027-03-31",
+    "coverages": [
+      "COLISAO",
+      "ROUBO_FURTO",
+      "INCENDIO",
+      "TERCEIROS",
+      "VIDROS",
+      "ASSISTENCIA_24H"
+    ],
+    "vehicle": {
+      "plate": "FIC9J01",
+      "model": "Strada 1.3",
+      "year": 2023
+    },
+    "_note": "dois veículos, só um com colisão"
+  },
+  {
+    "number": "AUTO-0010-02",
+    "customer_id": "CUST-0010",
+    "status": "ATIVA",
+    "start_date": "2026-05-01",
+    "end_date": "2027-04-30",
+    "coverages": [
+      "ROUBO_FURTO",
+      "INCENDIO",
+      "VIDROS",
+      "ASSISTENCIA_24H"
+    ],
+    "vehicle": {
+      "plate": "FIC0J12",
+      "model": "Mobi 1.0",
+      "year": 2020
+    },
+    "_note": "dois veículos, só um com colisão"
+  },
+  {
+    "number": "AUTO-0011-01",
+    "customer_id": "CUST-0011",
+    "status": "ATIVA",
+    "start_date": "2026-01-01",
+    "end_date": "2026-12-31",
+    "coverages": [
+      "COLISAO",
+      "TERCEIROS"
+    ],
+    "vehicle": {
+      "plate": "MCK1K23",
+      "model": "Polo 1.0",
+      "year": 2022
+    },
+    "_note": "vigente, cobertura mínima"
+  },
+  {
+    "number": "AUTO-0012-01",
+    "customer_id": "CUST-0012",
+    "status": "ATIVA",
+    "start_date": "2026-07-01",
+    "end_date": "2027-06-30",
+    "coverages": [
+      "COLISAO",
+      "ROUBO_FURTO",
+      "INCENDIO",
+      "TERCEIROS",
+      "VIDROS",
+      "ASSISTENCIA_24H"
+    ],
+    "vehicle": {
+      "plate": "EXP2L34",
+      "model": "Renegade 1.3",
+      "year": 2024
+    },
+    "_note": "vigente (cenários de fraude/injection)"
+  }
+]

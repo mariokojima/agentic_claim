@@ -1,0 +1,86 @@
+[
+  {
+    "id": "CUST-0001",
+    "name": "Ana Beatriz Sintética",
+    "cpf": "60000881325",
+    "phone": "+5511900000001",
+    "email": "ana.01@exemplo.invalid"
+  },
+  {
+    "id": "CUST-0002",
+    "name": "Bruno Carvalho Teste",
+    "cpf": "60238831922",
+    "phone": "+5511900000002",
+    "email": "bruno.02@exemplo.invalid"
+  },
+  {
+    "id": "CUST-0003",
+    "name": "Carla Dias Ficticia",
+    "cpf": "85618215403",
+    "phone": "+5511900000003",
+    "email": "carla.03@exemplo.invalid"
+  },
+  {
+    "id": "CUST-0004",
+    "name": "Diego Esteves Mock",
+    "cpf": "99791411662",
+    "phone": "+5511900000004",
+    "email": "diego.04@exemplo.invalid"
+  },
+  {
+    "id": "CUST-0005",
+    "name": "Elisa Fontes Exemplo",
+    "cpf": "78514900498",
+    "phone": "+5511900000005",
+    "email": "elisa.05@exemplo.invalid"
+  },
+  {
+    "id": "CUST-0006",
+    "name": "Fabio Gomes Simulado",
+    "cpf": "26598267145",
+    "phone": "+5511900000006",
+    "email": "fabio.06@exemplo.invalid"
+  },
+  {
+    "id": "CUST-0007",
+    "name": "Gabriela Hora Demo",
+    "cpf": "48068413588",
+    "phone": "+5511900000007",
+    "email": "gabriela.07@exemplo.invalid"
+  },
+  {
+    "id": "CUST-0008",
+    "name": "Heitor Ibanez Teste",
+    "cpf": "30156807220",
+    "phone": "+5511900000008",
+    "email": "heitor.08@exemplo.invalid"
+  },
+  {
+    "id": "CUST-0009",
+    "name": "Isabela Jardim Sintética",
+    "cpf": "56277391690",
+    "phone": "+5511900000009",
+    "email": "isabela.09@exemplo.invalid"
+  },
+  {
+    "id": "CUST-0010",
+    "name": "João Lima Ficticio",
+    "cpf": "19810523211",
+    "phone": "+5511900000010",
+    "email": "joao.10@exemplo.invalid"
+  },
+  {
+    "id": "CUST-0011",
+    "name": "Karina Moura Mock",
+    "cpf": "47740236047",
+    "phone": "+5511900000011",
+    "email": "karina.11@exemplo.invalid"
+  },
+  {
+    "id": "CUST-0012",
+    "name": "Lucas Nunes Exemplo",
+    "cpf": "79031020281",
+    "phone": "+5511900000012",
+    "email": "lucas.12@exemplo.invalid"
+  }
+]
