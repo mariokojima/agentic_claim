@@ -22,7 +22,7 @@ export function ChatPanel({ conversationId }: { conversationId: string | null })
   const [pending, setPending] = useState<UploadedAttachment[]>([]);
   const [error, setError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
-  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setMessages([]);
@@ -55,9 +55,11 @@ export function ChatPanel({ conversationId }: { conversationId: string | null })
   }, [conversationId]);
 
   useEffect(() => {
-    // Corpo em bloco: no Chrome recente scrollIntoView retorna Promise, que o React trataria como cleanup.
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    // Rola apenas a área de mensagens. scrollIntoView rolaria também a página (escondendo o painel)
+    // e, no Chrome recente, retorna Promise — que o React trataria como cleanup (corpo em bloco).
+    const body = bodyRef.current;
+    if (body) body.scrollTo({ top: body.scrollHeight, behavior: "smooth" });
+  }, [messages, busy]);
 
   const send = () => {
     const ws = wsRef.current;
@@ -111,7 +113,7 @@ export function ChatPanel({ conversationId }: { conversationId: string | null })
         </div>
       </div>
       {state?.protocol ? <div className="protocol-bar">Protocolo {state.protocol}</div> : null}
-      <div className="chat-body">
+      <div className="chat-body" ref={bodyRef}>
         <div className="day-chip">Hoje</div>
         {messages.map((m, i) => (
           <div key={i} className={`bubble ${m.role}`}>
@@ -132,7 +134,6 @@ export function ChatPanel({ conversationId }: { conversationId: string | null })
           </div>
         ))}
         {busy ? <div className="bubble assistant typing">…</div> : null}
-        <div ref={bottomRef} />
       </div>
       {error ? <div className="chat-error" onClick={() => setError(null)}>{error}</div> : null}
       {trayOpen ? (
