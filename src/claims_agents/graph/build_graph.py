@@ -1,6 +1,5 @@
 """Montagem do grafo principal (ver docs/architecture.md §1)."""
 
-import asyncio
 from typing import Any
 
 from langgraph.checkpoint.base import BaseCheckpointSaver
@@ -9,6 +8,7 @@ from langgraph.graph.state import CompiledStateGraph
 
 from claims_agents.agents.orchestrator.routing_policy import STAGE_TO_SPECIALIST
 from claims_agents.core.types import NodeFn
+from claims_agents.graph.demo import with_demo_delay
 from claims_agents.graph.deps import GraphDeps
 from claims_agents.graph.nodes import MainNodes, route_by_state
 from claims_agents.state import GlobalState
@@ -16,18 +16,6 @@ from claims_agents.state import GlobalState
 SPECIALISTS = list(STAGE_TO_SPECIALIST.values())
 
 NodeCallable = NodeFn[GlobalState]
-
-
-def with_demo_delay(fn: NodeCallable, delay_ms: int) -> NodeCallable:
-    """Modo demonstração (ADR-0012): segura o nó em "processando" antes de executá-lo."""
-    if delay_ms <= 0:
-        return fn
-
-    async def delayed(state: GlobalState) -> Any:
-        await asyncio.sleep(delay_ms / 1000)
-        return await fn(state)
-
-    return delayed
 
 
 def build_graph(

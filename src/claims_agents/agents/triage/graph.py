@@ -10,6 +10,7 @@ from claims_agents.agents.triage.state import TriageGraphState
 from claims_agents.agents.triage.subagents.customer_validation import nodes as customer_validation
 from claims_agents.agents.triage.subagents.decision import nodes as decision
 from claims_agents.core.messages import Messages
+from claims_agents.core.types import NodeWrapper, identity
 from claims_agents.tools.interfaces import GetCustomerData
 
 
@@ -18,12 +19,14 @@ def build_triage_graph(
     rules: dict[str, Any],
     messages: Messages,
     max_attempts: int = 3,
+    wrap: NodeWrapper = identity,
 ) -> CompiledStateGraph[Any, Any, Any, Any]:
     g = StateGraph(TriageGraphState)
     g.add_node(
-        "customer_validation", customer_validation.build(get_customer_data, messages, max_attempts)
+        "customer_validation",
+        wrap(customer_validation.build(get_customer_data, messages, max_attempts)),
     )
-    g.add_node("decision", decision.build(rules, messages))
+    g.add_node("decision", wrap(decision.build(rules, messages)))
     g.add_conditional_edges(START, coordinator.next_subagent, ["customer_validation", "decision"])
     g.add_conditional_edges(
         "customer_validation", coordinator.after_validation, {"end": END, "decision": "decision"}

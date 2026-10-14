@@ -33,7 +33,9 @@ def test_normalize_top_level_tasks_and_custom() -> None:
 def test_normalize_subgraph_tasks_become_subagent_events() -> None:
     ad = StreamAdapter("c1")
     ns = ("documents:abc",)
-    assert ad.normalize(ns, "tasks", {"id": "s1", "name": "validation", "input": {}}) == []
+    start = ad.normalize(ns, "tasks", {"id": "s1", "name": "validation", "input": {}})
+    assert start[0].event == "subagent_start" and start[0].status == "processing"
+    assert start[0].agent == "documents" and start[0].subagent == "validation"
     ev = ad.normalize(
         ns, "tasks", {"id": "s1", "name": "validation", "error": "boom", "result": None}
     )

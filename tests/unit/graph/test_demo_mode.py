@@ -4,7 +4,7 @@ import time
 from typing import Any
 
 from claims_agents.domain import Customer
-from claims_agents.graph.build_graph import with_demo_delay
+from claims_agents.graph.demo import with_demo_delay
 from claims_agents.state import GlobalState
 from claims_agents.tools.mocks.faults import FaultInjector
 from claims_agents.tools.resilience import ResilientTool, RetryPolicy, ToolCallRecord

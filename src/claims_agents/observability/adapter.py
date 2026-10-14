@@ -100,7 +100,11 @@ class StreamAdapter:
             ]
         if is_start:
             self._started[task_id] = time.perf_counter()
-            return []
+            return [
+                self._event(
+                    agent=parent, subagent=name, event="subagent_start", status="processing"
+                )
+            ]
         error = chunk.get("error")
         return [
             self._event(

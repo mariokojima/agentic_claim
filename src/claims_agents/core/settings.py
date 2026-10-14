@@ -56,6 +56,7 @@ class DemoSettings(BaseModel):
     """Atrasos ilustrativos para visualizar o fluxo no painel. Manter 0 em testes e experimentos."""
 
     node_delay_ms: int = 0
+    subagent_delay_ms: int = 0
     tool_delay_ms: int = 0
 
 

@@ -12,6 +12,7 @@ from claims_agents.agents.documents.subagents.complement import nodes as complem
 from claims_agents.agents.documents.subagents.intake_storage import nodes as intake_storage
 from claims_agents.agents.documents.subagents.validation import nodes as validation
 from claims_agents.core.messages import Messages
+from claims_agents.core.types import NodeWrapper, identity
 from claims_agents.tools.interfaces import StoreFiles, ValidateDocument
 
 
@@ -20,12 +21,13 @@ def build_documents_graph(
     validate_document: ValidateDocument,
     checklist_config: dict[str, Any],
     messages: Messages,
+    wrap: NodeWrapper = identity,
 ) -> CompiledStateGraph[Any, Any, Any, Any]:
     g = StateGraph(DocumentsGraphState)
-    g.add_node("checklist", checklist.build(checklist_config, messages))
-    g.add_node("intake_storage", intake_storage.build(store_files, messages))
-    g.add_node("validation", validation.build(validate_document, messages))
-    g.add_node("complement", complement.build(messages))
+    g.add_node("checklist", wrap(checklist.build(checklist_config, messages)))
+    g.add_node("intake_storage", wrap(intake_storage.build(store_files, messages)))
+    g.add_node("validation", wrap(validation.build(validate_document, messages)))
+    g.add_node("complement", wrap(complement.build(messages)))
     g.add_edge(START, "checklist")
     for node, nxt in zip(coordinator.ORDER, coordinator.ORDER[1:], strict=False):
         g.add_conditional_edges(node, coordinator.after(node), {"end": END, nxt: nxt})

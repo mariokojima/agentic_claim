@@ -19,6 +19,7 @@ metrics:
 # `make run` liga via env (CLAIMS_DEMO__NODE_DELAY_MS / CLAIMS_DEMO__TOOL_DELAY_MS).
 demo:
   node_delay_ms: 0
+  subagent_delay_ms: 0
   tool_delay_ms: 0
 tools:
   default_timeout_s: 5.0

@@ -17,6 +17,7 @@ from claims_agents.agents.triage.graph import build_triage_graph
 from claims_agents.agents.triage.state import TriageGraphState
 from claims_agents.core.errors import ToolError
 from claims_agents.domain import ClaimStage
+from claims_agents.graph.demo import demo_wrapper
 from claims_agents.graph.deps import GraphDeps
 from claims_agents.graph.transitions import decide_transition
 from claims_agents.observability.emit import emit
@@ -51,12 +52,13 @@ class MainNodes:
         reg, msgs = deps.registry, deps.messages
         attempts = deps.settings.triage.max_attempts_per_field
         self.guardrails = build_guardrails_graph(deps.guardrails_config)
+        wrap = demo_wrapper(deps.settings.demo.subagent_delay_ms)
         self.triage_graph = build_triage_graph(
-            reg.get_customer_data, deps.triage_rules, msgs, attempts
+            reg.get_customer_data, deps.triage_rules, msgs, attempts, wrap
         )
-        self.notice_graph = build_claim_notice_graph(reg.open_claim, msgs, attempts)
+        self.notice_graph = build_claim_notice_graph(reg.open_claim, msgs, attempts, wrap)
         self.documents_graph = build_documents_graph(
-            reg.store_files, reg.validate_document, deps.checklist, msgs
+            reg.store_files, reg.validate_document, deps.checklist, msgs, wrap
         )
 
     # --- recepção -------------------------------------------------------------------------------
