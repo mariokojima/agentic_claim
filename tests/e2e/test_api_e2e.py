@@ -81,7 +81,7 @@ def test_full_conversation_over_websocket(client: TestClient) -> None:
             replies, state = say(ws, customer["cpf"])
             assert state["claim_stage"] == "AVISO" and len(replies) == 2
 
-            replies, state = say(ws, "Colisão traseira no semáforo da Av. Fictícia")
+            replies, state = say(ws, "Ontem às 18h, colisão traseira no semáforo da Av. Fictícia")
             assert state["claim_stage"] == "DOCUMENTOS" and state["protocol"]
             protocol = state["protocol"]
 

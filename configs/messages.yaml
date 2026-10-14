@@ -5,8 +5,13 @@ triage:
   identified: "Obrigado, {name}! Localizei sua apólice {policy} (veículo {plate})."
 notice:
   ask_description: "Vamos registrar o aviso de sinistro. Descreva o ocorrido: quando, onde e o que aconteceu."
-  too_short: "Preciso de um pouco mais de detalhes sobre o ocorrido. Pode descrever novamente?"
-  registered: "Aviso registrado com sucesso! Seu protocolo é {protocol}."
+  understood: "Obrigado! Já anotei — {summary}."
+  missing: "Para registrar o aviso, ainda preciso saber:\n{items}"
+  missing_when: "• quando aconteceu (data, ex.: hoje, ontem, 12/10 — e a hora, se souber)"
+  missing_where: "• onde aconteceu (rua/avenida e número, rodovia ou ponto de referência)"
+  missing_what: "• o que aconteceu (ex.: bati na traseira de outro carro, fui atingido no cruzamento)"
+  future_date: "A data informada ({date}) está no futuro. Pode confirmar quando o acidente aconteceu?"
+  registered: "Aviso registrado com sucesso! Seu protocolo é {protocol}.\nResumo: {when} — {location}."
 documents:
   request: "Para concluir a abertura, envie pelo clipe de anexos:\n{items}"
   reminder: "Estou aguardando os documentos. Ainda faltam:\n{items}"

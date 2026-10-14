@@ -86,7 +86,7 @@ async def test_documents_complement_loop(
     conv = "conv-docs"
     await run_turn(graph, conv, text("Oi"))
     await run_turn(graph, conv, text(happy_customer.cpf))
-    await run_turn(graph, conv, text("Bati o carro no estacionamento do mercado"))
+    await run_turn(graph, conv, text("Ontem bati o carro no estacionamento do mercado"))
     partial = [
         attachment(tmp_path, DocumentType.CNH, {"cpf": happy_customer.cpf}),
         attachment(tmp_path, DocumentType.CRLV, {"plate": "ERR0R00"}),

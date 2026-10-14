@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from claims_agents.agents.claim_notice.state import NoticeGraphState
+from claims_agents.agents.claim_notice.subagents.event_data_collection.nodes import describe_when
 from claims_agents.agents.claim_notice.subagents.registration.schemas import RegistrationOutcome
 from claims_agents.core.errors import ToolError
 from claims_agents.core.messages import Messages
@@ -60,7 +61,12 @@ def build(open_claim: OpenClaim, messages: Messages) -> NodeFn[NoticeGraphState]
                 status="completed",
                 reason="Aviso registrado",
                 payload=outcome.model_dump(),
-                user_message=messages.get("notice.registered", protocol=resp.protocol),
+                user_message=messages.get(
+                    "notice.registered",
+                    protocol=resp.protocol,
+                    when=describe_when(sub.event),
+                    location=event.location,
+                ),
             ),
         }
 

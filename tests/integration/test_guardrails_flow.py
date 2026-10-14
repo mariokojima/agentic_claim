@@ -79,6 +79,8 @@ async def test_false_positive_passes(graph: Graph, happy_customer: Customer) -> 
     await run_turn(graph, conv, text("Oi"))
     await run_turn(graph, conv, text(happy_customer.cpf))
     r = await run_turn(
-        graph, conv, text("O outro motorista ignorou o sinal vermelho e bateu em mim")
+        graph,
+        conv,
+        text("Ontem, na Av. Brasil, o outro motorista ignorou o sinal vermelho e bateu em mim"),
     )
     assert r.state.claim_stage == ClaimStage.DOCUMENTOS and r.state.input_blocks == 0
