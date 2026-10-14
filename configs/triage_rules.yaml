@@ -1,18 +1,61 @@
-# Regras mínimas da Triagem (ADR-0008) — proposta para revisão do autor.
-required_fields:
-  - {name: cpf, prompt: "Para começar, poderia me informar o CPF do titular da apólice?"}
-  - {name: event_type, prompt: "O que aconteceu? Descreva brevemente o ocorrido."}
-  - {name: event_date, prompt: "Em que data aconteceu? (dd/mm/aaaa)"}
+# Regras da Triagem (ADR-0008, ADR-0014) — proposta para revisão do autor.
+# Fluxo: identificar o segurado (CPF) → entender o ocorrido (classificação) → decidir (elegibilidade).
+
+# Classificação do ocorrido por palavras-chave (regex, ignora maiúsculas). A primeira categoria da
+# lista `priority` que casar vence (ex.: "bati e quebrou o para-brisa" → COLISAO, não VIDROS).
+# A extração por LLM (Fase 3) mantém as mesmas categorias.
+event_classification:
+  priority: [ROUBO_FURTO, INCENDIO, COLISAO, FENOMENO_NATURAL, VIDROS, ASSISTENCIA, NAO_SINISTRO]
+  labels:
+    COLISAO: "colisão (acidente de trânsito)"
+    ROUBO_FURTO: "roubo ou furto"
+    INCENDIO: "incêndio"
+    FENOMENO_NATURAL: "evento da natureza (alagamento, granizo, queda de árvore)"
+    VIDROS: "dano em vidros, faróis ou retrovisores"
+    ASSISTENCIA: "pane ou necessidade de assistência"
+    NAO_SINISTRO: "assunto que não é um sinistro"
+  patterns:
+    ROUBO_FURTO:
+      - "(?i)\\b(roub\\w*|furt\\w*|assalt\\w*|levaram\\s+(o|meu)\\s+(carro|ve[ií]culo)|sumiu\\s+(o|meu)\\s+carro)\\b"
+    INCENDIO:
+      - "(?i)\\b(inc[eê]ndio|pegou\\s+fogo|incendi\\w*|queimou|em\\s+chamas)\\b"
+    COLISAO:
+      - "(?i)\\b(bat(?:i|eu|eram|emos|endo|er|ida|idas|ido|e)|colid\\w*|colis[aã]o|abalro\\w*|choc\\w*|choque|engavet\\w*|capot\\w*|tomb\\w*|acidente|batida)\\b"
+      - "(?i)\\b(fui|foi|fomos)\\s+(atingid\\w*|fechad\\w*|acertad\\w*)\\b"
+      - "(?i)\\b(amass\\w*|ralad\\w*|arranh\\w*)\\b.{0,40}\\b(carro|ve[ií]culo|porta|para-?choque|lateral|traseira|frente)\\b"
+      - "(?i)\\b(carro|ve[ií]culo|porta|para-?choque|lateral|traseira|frente)\\b.{0,40}\\b(amass\\w*|ralad\\w*|arranh\\w*)\\b"
+    FENOMENO_NATURAL:
+      - "(?i)\\b(alag\\w*|enchente|inunda\\w*|granizo|[aá]rvore\\s+caiu|caiu\\s+(uma\\s+)?[aá]rvore|desabamento|vendaval)\\b"
+    VIDROS:
+      - "(?i)\\b(para-?brisa|vidro|retrovisor|farol|lanterna)\\b.{0,30}\\b(trinc\\w*|quebr\\w*|rach\\w*|estour\\w*)\\b"
+      - "(?i)\\b(trinc\\w*|quebr\\w*|rach\\w*)\\b.{0,30}\\b(para-?brisa|vidro|retrovisor|farol|lanterna)\\b"
+    ASSISTENCIA:
+      - "(?i)\\b(pane|guincho|reboque|pneu\\s+(furado|estourado)|bateria|n[aã]o\\s+(liga|pega|d[aá]\\s+partida)|chave\\s+(trancada|perdida)|sem\\s+combust[ií]vel)\\b"
+    NAO_SINISTRO:
+      - "(?i)\\b(d[uú]vida|boleto|segunda\\s+via|2[ªa]\\s+via|pagamento|parcela|renova\\w*|cancel\\w*|cota[cç][aã]o|contratar|endere[cç]o|cadastro)\\b"
+  # Urgência alta: há feridos (registrada e sinalizada; não muda o fluxo na v1)
+  injuries_patterns:
+    - "(?i)\\b(ferid\\w*|machuc\\w*|hospital|ambul[aâ]ncia|samu|v[ií]tima|sangr\\w*|desmai\\w*)\\b"
+
 eligibility:
   accepted_event_types: [COLISAO]
   required_policy_status: ATIVA
   required_coverage: COLISAO
   event_must_be_within_policy_term: true
+
 rejection_messages:
   customer_not_found: "Não localizamos uma apólice com esses dados. Por favor, entre em contato com seu corretor."
   policy_not_active: "Sua apólice não está ativa no momento, por isso não é possível abrir o aviso por aqui. Seu corretor poderá orientar os próximos passos."
   outside_policy_term: "A data do evento está fora da vigência da apólice. Seu corretor poderá orientar os próximos passos."
   no_coverage: "Sua apólice não possui cobertura de colisão. Seu corretor poderá orientar sobre outras opções."
   event_type_out_of_scope: "Neste canal atendemos apenas avisos de colisão. Para outros eventos, entre em contato com a central."
+  # Orientação específica por tipo de ocorrido (fora do escopo deste canal)
+  event_type_ROUBO_FURTO: "Sinto muito pelo ocorrido. Em caso de roubo ou furto, registre o boletim de ocorrência e acione a central de sinistros pelo telefone 0800 000 0000 (fictício). Este canal atende apenas avisos de colisão."
+  event_type_INCENDIO: "Sinto muito pelo ocorrido. Para incêndio, acione a central de sinistros pelo telefone 0800 000 0000 (fictício), que dará o atendimento adequado. Este canal atende apenas avisos de colisão."
+  event_type_FENOMENO_NATURAL: "Sinto muito pelo ocorrido. Danos causados por eventos da natureza são atendidos pela central de sinistros no 0800 000 0000 (fictício). Este canal atende apenas avisos de colisão."
+  event_type_VIDROS: "Para danos em vidros, faróis ou retrovisores, acione o serviço de vidros pela central 0800 000 0001 (fictício); não é necessário abrir um aviso de sinistro."
+  event_type_ASSISTENCIA: "Para pane, guincho, pneu ou bateria, acione a Assistência 24h pelo 0800 000 0002 (fictício). Esse atendimento não abre um aviso de sinistro."
+  event_type_NAO_SINISTRO: "Este canal é dedicado à abertura de sinistros. Para dúvidas sobre apólice, pagamentos ou cadastro, fale com seu corretor ou acesse a área do cliente."
+
 urgency:
-  high_if_any: [has_injuries, blocking_traffic, third_party_injuries]
+  high_if_any: [has_injuries]

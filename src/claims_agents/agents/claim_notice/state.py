@@ -8,6 +8,7 @@ from claims_agents.state import CustomerRef, NoticeState, StageResult
 class NoticeGraphState(BaseModel):
     # entrada
     text: str = ""
+    prior_text: str = ""  # relato do ocorrido já feito na Triagem
     customer: CustomerRef | None = None
     sub: NoticeState = Field(default_factory=NoticeState)
     # saída

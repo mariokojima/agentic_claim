@@ -15,3 +15,4 @@
 | [0011](0011-eventos-fonte-unica.md) | Eventos via fonte única | aceito |
 | [0012](0012-modo-demonstracao.md) | Modo demonstração (atraso ilustrativo) | aceito |
 | [0013](0013-recusa-de-entrada-com-limite.md) | Bloqueio de entrada: recusa com limite | aceito |
+| [0014](0014-triagem-entende-o-ocorrido.md) | Triagem entende o ocorrido antes de abrir o aviso | aceito |

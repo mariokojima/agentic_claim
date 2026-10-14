@@ -211,6 +211,7 @@ class MainNodes:
                 text=state.inbound.text if state.inbound else "",
                 phone=state.customer_phone,
                 sub=state.triage,
+                customer=state.customer,  # identificado em turno anterior
             )
         )
         updates = self._apply(state, ClaimStage.TRIAGEM, "triage", out)
@@ -223,6 +224,7 @@ class MainNodes:
         out = await self.notice_graph.ainvoke(
             NoticeGraphState(
                 text=state.inbound.text if state.inbound else "",
+                prior_text=str(state.triage.outcome.get("event_description", "")),
                 customer=state.customer,
                 sub=state.notice,
             )

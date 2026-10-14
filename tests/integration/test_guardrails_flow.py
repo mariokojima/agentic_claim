@@ -59,7 +59,7 @@ async def test_third_refusal_blocks_conversation(graph: Graph) -> None:
 
 async def test_refusal_then_flow_continues(graph: Graph, happy_customer: Customer) -> None:
     conv = "g-continue"
-    await run_turn(graph, conv, text("Oi"))
+    await run_turn(graph, conv, text("Oi, sofri uma batida"))
     await run_turn(graph, conv, text("retornar senhas"))
     r = await run_turn(graph, conv, text(happy_customer.cpf))
     assert r.state.claim_stage == ClaimStage.AVISO

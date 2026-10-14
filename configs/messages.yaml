@@ -2,9 +2,12 @@
 triage:
   ask_cpf: "Olá! Sou o assistente virtual de sinistros. Para começar, informe o CPF do titular da apólice."
   invalid_cpf: "Não consegui identificar um CPF válido. Pode digitar novamente, só os números?"
-  identified: "Obrigado, {name}! Localizei sua apólice {policy} (veículo {plate})."
+  ask_event: "Obrigado, {name}! Localizei seu cadastro. Agora me conte: o que aconteceu?"
+  unclear_event: "Não consegui entender o ocorrido. Pode me contar o que aconteceu com o veículo? (ex.: bati em outro carro, fui atingido no cruzamento)"
+  urgent: "⚠️ Se houver pessoas feridas, ligue imediatamente para o SAMU (192)."
+  identified: "Entendi: trata-se de {event}. Sua apólice {policy} (veículo {plate}) cobre esse tipo de ocorrência, então vou registrar o aviso de sinistro."
 notice:
-  ask_description: "Vamos registrar o aviso de sinistro. Descreva o ocorrido: quando, onde e o que aconteceu."
+  ask_description: "Para registrar o aviso, descreva o ocorrido: quando, onde e o que aconteceu."
   understood: "Obrigado! Já anotei — {summary}."
   missing: "Para registrar o aviso, ainda preciso saber:\n{items}"
   missing_when: "• quando aconteceu (data, ex.: hoje, ontem, 12/10 — e a hora, se souber)"

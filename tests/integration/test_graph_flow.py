@@ -117,6 +117,9 @@ async def test_triage_rejection_goes_to_orientado(
     conv = f"conv-rej-{customer_idx}"
     await run_turn(graph, conv, text("Oi"))
     r = await run_turn(graph, conv, text(customer.cpf))
+    if r.state.claim_stage == ClaimStage.TRIAGEM:  # tem apólice: pergunta o ocorrido
+        assert r.state.awaiting is not None and r.state.awaiting.field == "event"
+        r = await run_turn(graph, conv, text("Bati o carro"))
     assert r.state.claim_stage == ClaimStage.ORIENTADO
     assert r.state.terminal_reason == expected_reason
     assert "corretor" in r.state.messages[-1].text or "Não localizamos" in r.state.messages[-1].text
@@ -142,7 +145,7 @@ async def test_pause_returns_handoff_without_running_agents(
     graph: Graph, deps: GraphDeps, happy_customer: Customer
 ) -> None:
     conv = "conv-pause"
-    await run_turn(graph, conv, text("Oi"))
+    await run_turn(graph, conv, text("Oi, bati o carro"))
     deps.control.set(True, conv)
     r = await run_turn(graph, conv, text(happy_customer.cpf))
     assert r.state.claim_stage == ClaimStage.TRIAGEM

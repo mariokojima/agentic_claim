@@ -17,12 +17,20 @@ NAME = "decision"
 
 
 def decide(
-    policies: list[dict[str, Any]], rules: dict[str, Any], event_date: date
+    policies: list[dict[str, Any]],
+    rules: dict[str, Any],
+    event_date: date,
+    event_type: str | None = "COLISAO",
 ) -> EligibilityDecision:
-    """Escolhe a primeira apólice elegível; senão, devolve o motivo mais específico."""
+    """Escolhe a primeira apólice elegível; senão, devolve o motivo mais específico.
+
+    Ordem: cliente inexistente → tipo de ocorrido fora do escopo → regras da apólice.
+    """
     elig = rules["eligibility"]
     if not policies:
         return EligibilityDecision(eligible=False, reason="customer_not_found")
+    if event_type not in elig["accepted_event_types"]:
+        return EligibilityDecision(eligible=False, reason=f"event_type_{event_type}")
     reasons: list[str] = []
     for p in policies:
         if p["status"] != elig["required_policy_status"]:
@@ -50,7 +58,8 @@ def build(
 ) -> NodeFn[TriageGraphState]:
     def decision(state: TriageGraphState) -> dict[str, Any]:
         sub = state.sub.model_copy(deep=True)
-        result = decide(sub.outcome.get("policies", []), rules, today())
+        event_type = sub.outcome.get("event_type")
+        result = decide(sub.outcome.get("policies", []), rules, today(), event_type)
         sub.step = "done"
         sub.outcome["decision"] = result.model_dump()
         emit(
@@ -67,7 +76,9 @@ def build(
                     status="rejected",
                     reason=result.reason,
                     payload={"rejection": result.reason},
-                    user_message=rules["rejection_messages"][result.reason],
+                    user_message=rules["rejection_messages"].get(
+                        result.reason, rules["rejection_messages"]["event_type_out_of_scope"]
+                    ),
                 ),
             }
         customer = (
@@ -86,10 +97,16 @@ def build(
             "result": StageResult(
                 status="completed",
                 reason="Segurado identificado e elegível",
-                payload=result.model_dump(),
-                user_message=messages.get(
+                payload=result.model_dump()
+                | {k: sub.outcome.get(k) for k in ("event_type", "event_description", "urgency")},
+                user_message=(
+                    messages.get("triage.urgent") + "\n\n"
+                    if sub.outcome.get("has_injuries")
+                    else ""
+                )
+                + messages.get(
                     "triage.identified",
-                    name=customer.name.split()[0] if customer else "",
+                    event=sub.outcome.get("event_label", "colisão"),
                     policy=result.policy_number,
                     plate=result.vehicle_plate,
                 ),

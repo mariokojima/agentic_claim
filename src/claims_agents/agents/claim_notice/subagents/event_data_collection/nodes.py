@@ -21,6 +21,7 @@ from claims_agents.state import StageResult
 
 NAME = "event_data_collection"
 FIELDS = ("when", "where", "what")
+FIELD_LABELS = {"when": "quando", "where": "onde", "what": "o que"}
 
 
 def describe_when(event: dict[str, Any]) -> str:
@@ -35,19 +36,23 @@ def build(
 ) -> NodeFn[NoticeGraphState]:
     def event_data_collection(state: NoticeGraphState) -> dict[str, Any]:
         sub = state.sub.model_copy(deep=True)
-        if sub.step == "start":
+        first_pass = sub.step == "start"
+        if first_pass:
             sub.step = "await_description"
-            return {
-                "sub": sub,
-                "awaiting_field": "description",
-                "result": StageResult(
-                    status="needs_input",
-                    reason="Descrição do evento solicitada",
-                    user_message=messages.get("notice.ask_description"),
-                ),
-            }
-
-        text = state.text.strip()
+            if not state.prior_text.strip():
+                return {
+                    "sub": sub,
+                    "awaiting_field": "description",
+                    "result": StageResult(
+                        status="needs_input",
+                        reason="Descrição do evento solicitada",
+                        user_message=messages.get("notice.ask_description"),
+                    ),
+                }
+            # reaproveita o relato da Triagem: só pergunta o que faltar
+            text = state.prior_text.strip()
+        else:
+            text = state.text.strip()
         ext = extract_event(text, today())
         event = dict(sub.event)
         before = {f: _has(event, f) for f in FIELDS}
@@ -78,7 +83,7 @@ def build(
                 sub, messages.get("notice.future_date", date=ext.when_text), "Data no futuro"
             )
         if missing:
-            if not found:
+            if not found and not first_pass:
                 attempts = sub.attempts.get("description", 0) + 1
                 sub.attempts["description"] = attempts
                 if attempts >= max_attempts:
@@ -97,7 +102,7 @@ def build(
                     + "\n\n"
                     + text_out
                 )
-            return _ask(sub, text_out, f"Faltam: {', '.join(missing)}")
+            return _ask(sub, text_out, f"Faltam: {', '.join(FIELD_LABELS[m] for m in missing)}")
 
         draft = EventDraft(
             event_date=event["event_date"],
@@ -130,7 +135,9 @@ def _understood(event: dict[str, Any]) -> str:
 
 def _summary(event: dict[str, Any], missing: list[str]) -> str:
     got = _understood(event) or "nada identificado"
-    return f"{got}" + (f" | faltam: {', '.join(missing)}" if missing else " | completo")
+    return f"{got}" + (
+        f" | faltam: {', '.join(FIELD_LABELS[m] for m in missing)}" if missing else " | completo"
+    )
 
 
 def _ask(sub: Any, text: str, reason: str) -> dict[str, Any]:

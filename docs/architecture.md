@@ -71,7 +71,7 @@ estourou → `ESCALADO_HUMANO`). Se `needs_input` ou terminal, segue para `guard
 
 | Especialista | Subagentes | Tools |
 |---|---|---|
-| triage | customer_validation, parties, event_classification, decision | `get_customer_data`, `send_whatsapp` (outbox) |
+| triage | customer_validation, event_classification, decision (parties na Fase 3) | `get_customer_data`, `send_whatsapp` (outbox) |
 | claim_notice | event_data_collection, coverage_assessment, registration | `open_claim`, `send_whatsapp` (outbox) |
 | documents | checklist, intake_storage, validation, complement | `store_files`, `validate_document`, `send_whatsapp` (outbox) |
 

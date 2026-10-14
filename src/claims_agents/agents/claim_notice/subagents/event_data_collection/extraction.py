@@ -45,7 +45,7 @@ BARE_PLACE_RE = re.compile(
     r"(?i)\b((?:rua|avenida|av|rodovia|estrada|alameda|travessa|marginal)\s+[\wÀ-ú][^,.;!?\n]*)"
 )
 WHAT_RE = re.compile(
-    r"(?i)\b(bat\w*|colid\w*|colis[aã]o|abalro\w*|choc\w*|choque|ating\w*|acert\w*|amass\w*|"
+    r"(?i)\b(bat(?:i|eu|eram|emos|endo|er|ida|idas|ido|e)|colid\w*|colis[aã]o|abalro\w*|choc\w*|choque|ating\w*|acert\w*|amass\w*|"
     r"arranh\w*|rasp\w*|capot\w*|tomb\w*|engavet\w*|derrap\w*|perdi\s+o\s+controle|"
     r"fech(?:ou|ada)|bateram|encost\w*)\b"
 )

@@ -35,6 +35,8 @@ def build(
         sub = state.sub.model_copy(deep=True)
         if sub.step == "start":
             sub.step = "await_cpf"
+            # relato espontâneo da 1ª mensagem (ex.: "Oi, bati o carro"), usado na classificação
+            sub.outcome["initial_text"] = state.text
             return {
                 "sub": sub,
                 "awaiting_field": "cpf",
@@ -84,7 +86,7 @@ def build(
                 details=f"CPF {mask_cpf(extraction.cpf)} sem cadastro",
             )
             sub.step = "decide"
-            sub.outcome = {"policies": []}
+            sub.outcome |= {"policies": []}
             return {"sub": sub}
         except ToolError as exc:
             return {
@@ -94,8 +96,9 @@ def build(
                 ),
             }
 
-        sub.step = "decide"
-        sub.outcome = {"policies": [p.model_dump(mode="json") for p in resp.policies]}
+        # identificado: entender o ocorrido; sem apólice, a decisão já orienta (não pergunta)
+        sub.step = "classify" if resp.policies else "decide"
+        sub.outcome |= {"policies": [p.model_dump(mode="json") for p in resp.policies]}
         return {
             "sub": sub,
             "customer": CustomerRef(

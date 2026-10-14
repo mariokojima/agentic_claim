@@ -16,6 +16,7 @@ export const AGENT_LABELS: Record<string, string> = {
 export const SUBAGENTS: Record<string, { id: string; label: string }[]> = {
   triage: [
     { id: "customer_validation", label: "Validação do segurado" },
+    { id: "event_classification", label: "Classificação do ocorrido" },
     { id: "decision", label: "Decisão de elegibilidade" },
   ],
   claim_notice: [
@@ -64,6 +65,8 @@ export const EVENT_LABELS: Record<string, string> = {
   field_extracted: "Dado extraído",
   field_invalid: "Dado inválido",
   customer_not_found: "Cliente não encontrado",
+  event_classified: "Ocorrido classificado",
+  event_unclear: "Ocorrido não identificado",
   eligibility_decision: "Decisão de elegibilidade",
   coverage_assessed: "Cobertura avaliada",
   claim_opened: "Aviso registrado",

@@ -127,7 +127,7 @@ def test_rest_messages_and_pause(client: TestClient) -> None:
     conv = client.post("/conversations", json={"phone": customer["phone"]}).json()[
         "conversation_id"
     ]
-    out = client.post(f"/conversations/{conv}/messages", json={"text": "Oi"}).json()
+    out = client.post(f"/conversations/{conv}/messages", json={"text": "Oi, bati o carro"}).json()
     assert out["state"]["awaiting"]["field"] == "cpf"
 
     assert client.post("/control/pause", json={"paused": True}).json()["global_paused"] is True
