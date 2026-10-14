@@ -10,8 +10,9 @@ Para apresentações, o autor pediu um atraso perceptível por caixa.
 ## Decisão
 `settings.demo.node_delay_ms` (atraso no início de cada nó do grafo principal, aplicado por
 `with_demo_delay` em `build_graph.py`) e `settings.demo.tool_delay_ms` (atraso em cada tool, aplicado
-pelo `ResilientTool` fora do timeout). As tools emitem `tool_start` (processando) além de `tool_call`.
-Default **0** em `configs/settings.yaml`; `make run` liga (500 ms/400 ms) e `make run DEMO_DELAY_MS=0`
+pelo `ResilientTool` fora do timeout) e `settings.demo.subagent_delay_ms` (atraso em cada subagente,
+aplicado por um `NodeWrapper` repassado aos subgrafos dos especialistas). As tools emitem `tool_start` (processando) além de `tool_call`.
+Default **0** em `configs/settings.yaml`; `make run` liga (500 ms por nó, 400 ms por subagente e por tool) e `make run DEMO_DELAY_MS=0`
 desliga. Os agentes não conhecem o modo demonstração.
 
 ## Consequências

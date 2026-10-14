@@ -96,6 +96,11 @@ button { font: inherit; cursor: pointer; }
 
 .agent-node { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; width: 190px; box-shadow: 0 2px 6px rgba(20, 30, 50, 0.06); transition: box-shadow 0.2s, border-color 0.2s; }
 .agent-node.specialist { border-left: 3px solid #9cb8e8; }
+.agent-node.subagent { width: 145px; padding: 5px 9px; border-radius: 8px; border-style: dashed; background: #fbfcfe; }
+.agent-node.subagent .agent-node-title { font-size: 12px; font-weight: 600; line-height: 1.2; align-items: flex-start; }
+.agent-node.subagent .agent-node-title .dot { margin-top: 3px; }
+.agent-node.subagent .agent-node-detail { font-size: 10px; }
+.edge-sub .react-flow__edge-path { stroke: #b6c3d6; stroke-dasharray: 3 3; }
 .agent-node-title { font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 7px; }
 .agent-node-detail { color: var(--muted); font-size: 11px; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .agent-node.status-processing { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(47, 127, 240, 0.15); }

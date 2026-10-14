@@ -1,6 +1,6 @@
 import { MarkerType, type Edge } from "@xyflow/react";
 import type { AgentNodeType } from "./AgentNode";
-import { AGENT_LABELS } from "../labels";
+import { AGENT_LABELS, SUBAGENTS } from "../labels";
 
 const pos: Record<string, [number, number, "specialist" | "core"]> = {
   receive: [0, 0, "core"],
@@ -9,18 +9,37 @@ const pos: Record<string, [number, number, "specialist" | "core"]> = {
   triage: [500, 0, "specialist"],
   claim_notice: [500, 120, "specialist"],
   documents: [500, 240, "specialist"],
-  transition: [240, 330, "core"],
-  guardrails_out: [0, 330, "core"],
+  transition: [240, 350, "core"],
+  guardrails_out: [0, 350, "core"],
   send: [0, 165, "core"],
 };
 
-export const baseNodes: AgentNodeType[] = Object.entries(pos).map(([id, [x, y, kind]]) => ({
+const coreNodes: AgentNodeType[] = Object.entries(pos).map(([id, [x, y, kind]]) => ({
   id,
   type: "agent",
   position: { x, y },
   data: { label: AGENT_LABELS[id], kind },
   draggable: true,
 }));
+
+// Subagentes: linha de caixas menores à direita de cada especialista (id = "<especialista>:<subagente>").
+// Até SUB_PER_ROW por linha; o excedente quebra para uma segunda linha logo abaixo.
+const SUB_X0 = 720;
+const SUB_STEP = 158;
+const SUB_PER_ROW = 3;
+const SUB_ROW_H = 52;
+export const subagentNodes: AgentNodeType[] = Object.entries(SUBAGENTS).flatMap(([agent, subs]) =>
+  subs.map((sub, i) => ({
+    id: `${agent}:${sub.id}`,
+    type: "agent",
+    position: {
+      x: SUB_X0 + (i % SUB_PER_ROW) * SUB_STEP,
+      y: pos[agent][1] - 2 + Math.floor(i / SUB_PER_ROW) * SUB_ROW_H,
+    },
+    data: { label: sub.label, kind: "subagent" as const },
+    draggable: true,
+  })),
+);
 
 const arrow = { type: MarkerType.ArrowClosed, width: 16, height: 16 };
 const e = (source: string, target: string, sh: string, th: string, extra: Partial<Edge> = {}): Edge => ({
@@ -34,7 +53,17 @@ const e = (source: string, target: string, sh: string, th: string, extra: Partia
   ...extra,
 });
 
+const subagentEdges: Edge[] = Object.entries(SUBAGENTS).flatMap(([agent, subs]) =>
+  subs.map((sub, i) =>
+    e(i === 0 ? agent : `${agent}:${subs[i - 1].id}`, `${agent}:${sub.id}`, "r", "l", {
+      type: i > 0 && i % SUB_PER_ROW === 0 ? "smoothstep" : "straight",
+      className: "edge-sub",
+    }),
+  ),
+);
+
 export const baseEdges: Edge[] = [
+  ...subagentEdges,
   e("receive", "guardrails_in", "r", "l"),
   e("receive", "guardrails_out", "b", "t", { label: "pausado / encerrado", className: "edge-alt" }),
   e("guardrails_in", "orchestrator", "b", "t"),
@@ -49,3 +78,5 @@ export const baseEdges: Edge[] = [
   e("transition", "guardrails_out", "r", "l"),
   e("guardrails_out", "send", "ts", "bt"),
 ];
+
+export const baseNodes: AgentNodeType[] = [...coreNodes, ...subagentNodes];

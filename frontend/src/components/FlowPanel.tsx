@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { Background, ReactFlow, useNodesState } from "@xyflow/react";
+import { Background, Controls, ReactFlow, useNodesState } from "@xyflow/react";
 import { AgentNode, type AgentNodeType } from "../flow/AgentNode";
 import { baseEdges, baseNodes } from "../flow/graph";
 import type { NodeState } from "../flow/status";
@@ -44,13 +44,14 @@ export function FlowPanel({ statuses: rawStatuses }: { statuses: Record<string, 
           edges={edges}
           nodeTypes={nodeTypes}
           fitView
-          fitViewOptions={{ padding: 0.12 }}
+          fitViewOptions={{ padding: 0.06 }}
           proOptions={{ hideAttribution: true }}
           nodesConnectable={false}
           zoomOnScroll={false}
           panOnScroll
         >
           <Background gap={20} size={1} />
+          <Controls showInteractive={false} position="bottom-right" orientation="horizontal" />
         </ReactFlow>
       </div>
       <div className="tools-col">

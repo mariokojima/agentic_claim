@@ -12,6 +12,29 @@ export const AGENT_LABELS: Record<string, string> = {
   graph: "Grafo",
 };
 
+/** Subagentes de cada especialista, na ordem em que executam (ids = nós dos subgrafos). */
+export const SUBAGENTS: Record<string, { id: string; label: string }[]> = {
+  triage: [
+    { id: "customer_validation", label: "Validação do segurado" },
+    { id: "decision", label: "Decisão de elegibilidade" },
+  ],
+  claim_notice: [
+    { id: "event_data_collection", label: "Coleta do evento" },
+    { id: "coverage_assessment", label: "Avaliação de cobertura" },
+    { id: "registration", label: "Registro e protocolo" },
+  ],
+  documents: [
+    { id: "checklist", label: "Checklist" },
+    { id: "intake_storage", label: "Recepção e armazenamento" },
+    { id: "validation", label: "Validação" },
+    { id: "complement", label: "Complementação" },
+  ],
+};
+
+export function subagentLabel(agent: string, subagent: string): string {
+  return SUBAGENTS[agent]?.find((s) => s.id === subagent)?.label ?? subagent;
+}
+
 export const TOOL_LABELS: Record<string, string> = {
   get_customer_data: "Get Dados Cliente",
   open_claim: "Abre Sinistro",
@@ -23,6 +46,7 @@ export const TOOL_LABELS: Record<string, string> = {
 export const EVENT_LABELS: Record<string, string> = {
   node_start: "Início",
   node_end: "Fim",
+  subagent_start: "Subagente iniciado",
   subagent_end: "Subagente concluído",
   flow_started: "Conversa iniciada",
   message_received: "Mensagem recebida",

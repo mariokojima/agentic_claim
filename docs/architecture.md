@@ -132,7 +132,8 @@ class AgentEvent(BaseModel):
 
 - **Fonte única**: `observability/adapter.py` consome `graph.astream(..., stream_mode=["updates", "custom"])`
   e normaliza em `AgentEvent`. Nós emitem eventos de domínio com `emit()` (wrapper de
-  `get_stream_writer()`); o adaptador gera `node_start/node_end` a partir das atualizações.
+  `get_stream_writer()`); o adaptador gera `node_start/node_end` (grafo principal) e
+  `subagent_start/subagent_end` (nós dos subgrafos), exibidos no painel como caixas de subagente.
 - Eventos persistidos em SQLite (`EventStore`) e publicados num bus in-process para `WS /ws/events`.
 - KPIs derivados do event store (`metrics.py`): Taxa de Sucesso (ADR-0006) e Interações Ativas
   (conversas não terminais com atividade dentro do timeout).

@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import type { AgentEvent } from "../api";
-import { AGENT_LABELS, EVENT_LABELS, STATUS_LABELS, TOOL_LABELS } from "../labels";
+import { AGENT_LABELS, EVENT_LABELS, STATUS_LABELS, TOOL_LABELS, subagentLabel } from "../labels";
 
-const NODE_EVENTS = new Set(["node_start", "node_end", "subagent_end", "tool_start"]);
+const NODE_EVENTS = new Set(["node_start", "node_end", "subagent_start", "subagent_end", "tool_start"]);
 const STATUS_ICON: Record<string, string> = { completed: "✔", processing: "◌", warning: "⚠", error: "✖" };
 
 /** Eventos de detecção pelo guardrail (destacados em vermelho no log). */
@@ -20,7 +20,7 @@ function time(ts: string) {
 
 function agentLabel(ev: AgentEvent) {
   const base = AGENT_LABELS[ev.agent] ?? ev.agent;
-  return ev.subagent ? `${base} › ${ev.subagent}` : base;
+  return ev.subagent ? `${base} › ${subagentLabel(ev.agent, ev.subagent)}` : base;
 }
 
 export function EventLog({ events, conversationId }: { events: AgentEvent[]; conversationId: string | null }) {

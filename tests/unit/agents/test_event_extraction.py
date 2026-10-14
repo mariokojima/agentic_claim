@@ -29,7 +29,7 @@ TODAY = date(2026, 10, 13)  # terça-feira
             "Ontem por volta das 19:30 um carro bateu na minha traseira na Rua das Flores, 120",
             date(2026, 10, 12),
             time(19, 30),
-            "Rua das Flores",
+            "Rua das Flores, 120",
             True,
         ),
         (
@@ -94,7 +94,7 @@ def test_asks_only_for_missing_and_accumulates() -> None:
     assert "onde aconteceu" in msg2 and "quando aconteceu" not in msg2 and "Já anotei" in msg2
     assert "result" not in third  # completo: segue para a avaliação de cobertura
     assert third["sub"].step == "assess"
-    assert third["sub"].event["location"] == "Av Paulista"
+    assert third["sub"].event["location"] == "Av Paulista, 1000"
     assert third["sub"].event["event_date"] == "2026-10-12"
 
 

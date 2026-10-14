@@ -103,17 +103,19 @@ def extract_where(text: str) -> str | None:
     m = WHERE_RE.search(text) or BARE_PLACE_RE.search(text)
     if not m:
         return None
+    number = re.match(r",?\s*(?:n[º°o.]?\s*)?(\d{1,6})\b", text[m.end() :])  # "Av X, 1000"
+    suffix = f", {number.group(1)}" if number else ""
     place = re.split(
         r"(?i)\s+(?:e\s+)?(?:quando|enquanto|onde|ontem|hoje|anteontem|[àa]s\s+\d)", m.group(1)
     )[0]
-    place = place.strip()[:100]
+    place = (place.strip() + (suffix if place.strip() == m.group(1).strip() else ""))[:100]
     # "na rua" / "no shopping" sozinhos são vagos: exige nome ou referência (≥ 2 palavras)
     return place if len(place.split()) >= 2 else None
 
 
 def extract_what(text: str) -> str | None:
     m = WHAT_RE.search(text)
-    return m.group(0) if m else None
+    return m.group(0).lower() if m else None
 
 
 def extract_event(text: str, today: date) -> EventExtraction:
