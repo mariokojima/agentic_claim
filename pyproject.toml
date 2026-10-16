@@ -2,7 +2,7 @@
 name = "claims-agents"
 version = "0.1.0"
 description = "PoC multiagente (LangGraph) de abertura de sinistro de automóvel"
-readme = "CLAUDE.md"
+readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi>=0.143.0",
