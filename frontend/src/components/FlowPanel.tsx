@@ -14,6 +14,7 @@ const TOOL_ICONS: Record<string, string> = {
   store_files: "🗄️",
   validate_document: "✅",
   send_whatsapp: "💬",
+  llm: "🧠",
 };
 
 export function FlowPanel({ statuses: rawStatuses }: { statuses: Record<string, NodeState> }) {

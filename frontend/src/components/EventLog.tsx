@@ -2,13 +2,14 @@ import { useMemo, useState } from "react";
 import type { AgentEvent } from "../api";
 import { AGENT_LABELS, EVENT_LABELS, STATUS_LABELS, TOOL_LABELS, subagentLabel } from "../labels";
 
-const NODE_EVENTS = new Set(["node_start", "node_end", "subagent_start", "subagent_end", "tool_start"]);
+const NODE_EVENTS = new Set(["node_start", "node_end", "subagent_start", "subagent_end", "tool_start", "llm_start"]);
 const STATUS_ICON: Record<string, string> = { completed: "✔", processing: "◌", warning: "⚠", error: "✖" };
 
 /** Eventos de detecção pelo guardrail (destacados em vermelho no log). */
 function isGuardrailAlert(ev: AgentEvent): boolean {
   if (ev.event === "guardrail_verdict") return ev.data.decision !== "allow";
   if (ev.event === "input_refused") return true;
+  if (ev.event === "corporate_check") return ev.data.decision !== "allow" && ev.data.decision !== "sanitize";
   if (ev.event === "stage_transition") return ev.data.to === "BLOQUEADO" || ev.data.to === "ESCALADO_HUMANO";
   return false;
 }

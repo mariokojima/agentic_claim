@@ -13,7 +13,7 @@ export function deriveStatuses(events: AgentEvent[]): Record<string, NodeState> 
     if (ev.event === "node_start" && ev.agent === "receive") {
       for (const key of Object.keys(states)) delete states[key];
     }
-    if ((ev.event === "tool_call" || ev.event === "tool_start") && ev.tool) {
+    if (ev.tool) {  // tools e LLM (tool_start/tool_call, llm_start/llm_call)
       states[`tool:${ev.tool}`] = { status: ev.status, detail: ev.details };
       continue;
     }

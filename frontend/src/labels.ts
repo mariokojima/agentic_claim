@@ -18,6 +18,7 @@ export const SUBAGENTS: Record<string, { id: string; label: string }[]> = {
     { id: "customer_validation", label: "Validação do segurado" },
     { id: "event_classification", label: "Classificação do ocorrido" },
     { id: "decision", label: "Decisão de elegibilidade" },
+    { id: "parties", label: "Envolvidos" },
   ],
   claim_notice: [
     { id: "event_data_collection", label: "Coleta do evento" },
@@ -42,6 +43,7 @@ export const TOOL_LABELS: Record<string, string> = {
   store_files: "Armazena Arquivos",
   validate_document: "Valida Documentos",
   send_whatsapp: "Envia WhatsApp",
+  llm: "LLM (Gemini)",
 };
 
 export const EVENT_LABELS: Record<string, string> = {
@@ -67,6 +69,11 @@ export const EVENT_LABELS: Record<string, string> = {
   customer_not_found: "Cliente não encontrado",
   event_classified: "Ocorrido classificado",
   event_unclear: "Ocorrido não identificado",
+  parties_identified: "Envolvidos identificados",
+  corporate_check: "Checagem corporativa",
+  inactivity_timeout: "Timeout de inatividade",
+  llm_start: "LLM em execução",
+  llm_call: "Chamada ao LLM",
   eligibility_decision: "Decisão de elegibilidade",
   coverage_assessed: "Cobertura avaliada",
   claim_opened: "Aviso registrado",

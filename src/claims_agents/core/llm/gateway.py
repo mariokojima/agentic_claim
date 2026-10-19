@@ -162,7 +162,7 @@ class OpenAICompatibleClient:
         emit(
             "llm_call",
             tool="llm",
-            status="warning" if resp.fallback_used else "completed",
+            status="completed",  # fallback é resiliência esperada, não alerta (vai no detalhe)
             latency_ms=resp.latency_ms,
             tokens=resp.usage.total_tokens,
             details=f"{role}: {resp.model}, {resp.usage.total_tokens} tokens"
