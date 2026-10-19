@@ -1,4 +1,4 @@
-.PHONY: install check check-front lint typecheck test fmt seed run dev-front fixtures documents scenarios
+.PHONY: install check check-front lint typecheck test fmt seed run dev-front fixtures documents scenarios evaluate
 
 install:
 	uv sync
@@ -45,5 +45,9 @@ check-front:
 dev-front:
 	cd frontend && npm run dev
 
-scenarios:
-	uv run python scripts/run_scenarios.py --suite smoke
+# Avaliação (seção 12). Relatórios em reports/<data>_<suíte>/report.md (último: reports/latest.md)
+scenarios:  ## smoke, só regras (sem LLM, sem custo)
+	uv run python scripts/run_scenarios.py --suite smoke --experiments baseline
+
+evaluate:  ## bateria completa × todos os experimentos (usa o LLM real do .env)
+	uv run python scripts/run_scenarios.py --suite full --experiments all --allow-real-llm
