@@ -9,6 +9,8 @@ class NoticeGraphState(BaseModel):
     # entrada
     text: str = ""
     prior_text: str = ""  # relato do ocorrido já feito na Triagem
+    parties: dict[str, bool] = Field(default_factory=dict)  # has_third_parties / has_injuries
+    known_what: str = ""  # ocorrido já entendido na Triagem (ex.: "colisão")
     customer: CustomerRef | None = None
     sub: NoticeState = Field(default_factory=NoticeState)
     # saída

@@ -6,7 +6,7 @@ import pytest
 
 from claims_agents.agents.claim_notice.state import NoticeGraphState
 from claims_agents.agents.claim_notice.subagents.event_data_collection import nodes
-from claims_agents.agents.claim_notice.subagents.event_data_collection.extraction import (
+from claims_agents.agents.shared.event_extraction import (
     extract_event,
 )
 from claims_agents.core.messages import load_messages

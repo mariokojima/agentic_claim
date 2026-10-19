@@ -1,5 +1,7 @@
 """Extração determinística de quando/onde/o que aconteceu a partir de texto livre (pt-BR).
 
+Compartilhada entre a Triagem (data do evento para a vigência) e o Aviso (coleta).
+
 Fase 1-2: regras. Na Fase 4 a extração passa a ser feita por LLM com saída estruturada,
 mantendo o mesmo contrato (`EventExtraction`).
 """

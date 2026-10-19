@@ -1,6 +1,7 @@
 """Coordenador da Triagem: escolhe o próximo subagente a partir do sub-estado.
 
-Sequência: validação do segurado → classificação do ocorrido → decisão de elegibilidade.
+Sequência: validação do segurado → classificação do ocorrido → decisão de elegibilidade →
+envolvidos (só se elegível; conclui a Triagem). Fora do escopo/inelegível termina na decisão.
 """
 
 from claims_agents.agents.triage.state import TriageGraphState
@@ -12,15 +13,21 @@ def next_subagent(state: TriageGraphState) -> str:
         return "customer_validation"
     if step in ("classify", "await_event"):
         return "event_classification"
+    if step in ("parties", "await_parties"):
+        return "parties"
     return "decision"
 
 
 def after_validation(state: TriageGraphState) -> str:
     if state.result is not None:
         return "end"
-    # cliente inexistente pula a classificação (a decisão rejeita com orientação)
+    # cliente inexistente/sem apólice pula a classificação (a decisão rejeita com orientação)
     return "decision" if state.sub.step == "decide" else "event_classification"
 
 
 def after_classification(state: TriageGraphState) -> str:
     return "end" if state.result is not None else "decision"
+
+
+def after_decision(state: TriageGraphState) -> str:
+    return "end" if state.result is not None else "parties"

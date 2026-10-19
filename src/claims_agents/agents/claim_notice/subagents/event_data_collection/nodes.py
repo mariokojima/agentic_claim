@@ -10,10 +10,10 @@ from datetime import date
 from typing import Any
 
 from claims_agents.agents.claim_notice.state import NoticeGraphState
-from claims_agents.agents.claim_notice.subagents.event_data_collection.extraction import (
+from claims_agents.agents.claim_notice.subagents.event_data_collection.schemas import EventDraft
+from claims_agents.agents.shared.event_extraction import (
     extract_event,
 )
-from claims_agents.agents.claim_notice.subagents.event_data_collection.schemas import EventDraft
 from claims_agents.core.messages import Messages
 from claims_agents.core.types import NodeFn
 from claims_agents.observability.emit import emit
@@ -64,6 +64,8 @@ def build(
             event["location"] = ext.location
         if ext.what and not before["what"]:
             event["what"] = ext.what
+        elif first_pass and not before["what"] and state.known_what:
+            event["what"] = state.known_what  # a Triagem já entendeu o ocorrido
         if text:
             event["description"] = f"{event.get('description', '')} {text}".strip()
         sub.event = event
@@ -109,6 +111,8 @@ def build(
             event_time=event.get("event_time"),
             location=event["location"],
             description=event["description"],
+            has_third_parties=state.parties.get("has_third_parties", False),
+            has_injuries=state.parties.get("has_injuries", False),
         )
         sub.event = draft.model_dump() | {"what": event["what"]}
         sub.step = "assess"

@@ -37,6 +37,22 @@ event_classification:
   injuries_patterns:
     - "(?i)\\b(ferid\\w*|machuc\\w*|hospital|ambul[aâ]ncia|samu|v[ií]tima|sangr\\w*|desmai\\w*)\\b"
 
+# Envolvidos (subagente "Envolvidos", só para colisão). Negativas são avaliadas antes das positivas.
+# Terceiros ou feridos tornam o BO obrigatório na etapa de Documentos (documents_checklist.yaml).
+parties:
+  no_third_parties_patterns:
+    - "(?i)\\b(sozinh[oa]|s[oó]\\s+eu|ningu[eé]m\\s+mais|nenhum\\s+outro|sem\\s+(outro|terceiro)s?|n[aã]o\\s+(havia|tinha|teve)\\s+(outro|mais\\s+ningu[eé]m))\\b"
+    - "(?i)\\b(bati|colidi|encostei|raspei|ralei)\\s+(\\w+\\s+){0,3}(n[oa]|em|num[a]?|contra)\\s+(\\w+\\s+){0,2}(poste|muro|parede|port[aã]o|pilar|[aá]rvore|guia|meio-?fio|mureta|grade|cerca|coluna)\\b"
+  third_parties_patterns:
+    - "(?i)\\b(outr[oa]s?\\s+(carro|ve[ií]culo|motorista|condutor|moto|caminh[aã]o|[oô]nibus|pessoa)s?|terceir[oa]s?)\\b"
+    - "(?i)\\b(uma?\\s+)?(moto(queiro|ciclista)?|[oô]nibus|caminh[aã]o|van|pedestre|ciclista|bicicleta|taxi|t[aá]xi|uber)\\b"
+    - "(?i)\\b(um\\s+(cara|carro|motorista|sujeito|rapaz|senhor|senhora|mulher|homem)|o\\s+outro|me\\s+fechou|bateram|bateu\\s+(em\\s+mim|n[oa]\\s+meu|n[oa]\\s+minha)|fui\\s+(atingid|fechad|acertad)\\w*)\\b"
+    - "(?i)\\b(bati|colidi)\\s+(\\w+\\s+){0,3}(em|n[oa]|com)\\s+(\\w+\\s+){0,2}(carro|ve[ií]culo|moto|traseira|caminh[aã]o)\\b"
+  no_injuries_patterns:
+    - "(?i)\\b(ningu[eé]m\\s+(se\\s+)?(feriu|machucou|ferid[oa]|machucad[oa])|sem\\s+(feridos|v[ií]timas)|tod[oa]s\\s+bem|n[aã]o\\s+(houve|teve|h[aá])\\s+(feridos|v[ií]timas)|ningu[eé]m\\s+saiu\\s+ferido)\\b"
+  injuries_patterns:
+    - "(?i)\\b(ferid\\w*|machuc\\w*|hospital|ambul[aâ]ncia|samu|v[ií]tima|sangr\\w*|desmai\\w*)\\b"
+
 eligibility:
   accepted_event_types: [COLISAO]
   required_policy_status: ATIVA

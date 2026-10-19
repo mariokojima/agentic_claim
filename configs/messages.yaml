@@ -4,6 +4,11 @@ triage:
   invalid_cpf: "Não consegui identificar um CPF válido. Pode digitar novamente, só os números?"
   ask_event: "Obrigado, {name}! Localizei seu cadastro. Agora me conte: o que aconteceu?"
   unclear_event: "Não consegui entender o ocorrido. Pode me contar o que aconteceu com o veículo? (ex.: bati em outro carro, fui atingido no cruzamento)"
+  ask_parties_both: "Entendi. Para seguir, me diga: havia outro veículo ou pessoa envolvida? E alguém se feriu?"
+  ask_parties_third_parties: "Havia outro veículo ou pessoa envolvida no ocorrido?"
+  ask_parties_injuries: "Alguém se feriu?"
+  unclear_parties: "Não consegui entender. Por favor, responda: havia outro veículo ou pessoa envolvida? Alguém se feriu? (ex.: \"sim, outro carro; ninguém se feriu\")"
+  session_expired: "Como ficamos um tempo sem conversar, vou reiniciar o atendimento para garantir que os dados estejam corretos."
   urgent: "⚠️ Se houver pessoas feridas, ligue imediatamente para o SAMU (192)."
   identified: "Entendi: trata-se de {event}. Sua apólice {policy} (veículo {plate}) cobre esse tipo de ocorrência, então vou registrar o aviso de sinistro."
 notice:

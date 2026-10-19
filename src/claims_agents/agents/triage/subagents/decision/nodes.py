@@ -59,8 +59,11 @@ def build(
     def decision(state: TriageGraphState) -> dict[str, Any]:
         sub = state.sub.model_copy(deep=True)
         event_type = sub.outcome.get("event_type")
-        result = decide(sub.outcome.get("policies", []), rules, today(), event_type)
-        sub.step = "done"
+        # vigência checada pela data do acidente, quando informada (senão, hoje)
+        known_date = sub.outcome.get("event_date")
+        event_date = date.fromisoformat(known_date) if known_date else today()
+        result = decide(sub.outcome.get("policies", []), rules, event_date, event_type)
+        sub.step = "done"  # rejeitado; se elegível, vira "parties" abaixo
         sub.outcome["decision"] = result.model_dump()
         emit(
             "eligibility_decision",
@@ -91,26 +94,8 @@ def build(
             if state.customer
             else None
         )
-        return {
-            "sub": sub,
-            "customer": customer,
-            "result": StageResult(
-                status="completed",
-                reason="Segurado identificado e elegível",
-                payload=result.model_dump()
-                | {k: sub.outcome.get(k) for k in ("event_type", "event_description", "urgency")},
-                user_message=(
-                    messages.get("triage.urgent") + "\n\n"
-                    if sub.outcome.get("has_injuries")
-                    else ""
-                )
-                + messages.get(
-                    "triage.identified",
-                    event=sub.outcome.get("event_label", "colisão"),
-                    policy=result.policy_number,
-                    plate=result.vehicle_plate,
-                ),
-            ),
-        }
+        # elegível: segue para os envolvidos, que concluem a Triagem
+        sub.step = "parties"
+        return {"sub": sub, "customer": customer}
 
     return decision
