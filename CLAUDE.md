@@ -1,7 +1,7 @@
 # CLAUDE.md — PoC agêntica de abertura de sinistro
 
 PoC de mestrado: sistema multiagente (LangGraph) que conduz a abertura de um sinistro de
-**automóvel/colisão**, da primeira mensagem do segurado (WhatsApp simulado) até `CONCLUIDO`.
+**veículo** (colisão, roubo/furto, incêndio, natureza, vidros — ADR-0018), da primeira mensagem do segurado (WhatsApp simulado) até `CONCLUIDO`.
 Tudo é mockado e **somente com dados sintéticos**.
 
 Fontes de verdade (não reler `docs/00-briefing.md`; use estes):
@@ -31,7 +31,8 @@ Rodar um teste: `uv run pytest -q tests/unit/tools/test_customer_data.py -k not_
 ## Layout
 
 ```
-configs/      models.yaml, settings.yaml, guardrails.yaml, triage_rules.yaml, documents_checklist.yaml,
+configs/      models.yaml, settings.yaml, guardrails.yaml, triage_rules.yaml, claim_types.yaml,
+              documents_checklist.yaml,
               messages.yaml (textos ao cliente), orchestrator.yaml (intenções)
 prompts/      prompts versionados (espelham agents/)
 data/         fixtures/ (clientes, apólices) · evaluation/ (cenários)

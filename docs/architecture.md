@@ -36,6 +36,9 @@ orchestrator ◄──────────── etapa concluída (hops < ma
 `ClaimStage`: `TRIAGEM → AVISO → DOCUMENTOS → CONCLUIDO`; terminais `ORIENTADO`, `BLOQUEADO`,
 `ESCALADO_HUMANO`, `CANCELADO`. **Só `graph/transitions.py` altera `claim_stage`.**
 
+Tipos de sinistro aceitos e suas regras: `configs/claim_types.yaml` (ADR-0018); o tipo entendido
+na Triagem define a cobertura exigida, as perguntas, os dados do Aviso e o checklist.
+
 | Etapa | Especialista | `completed` leva a | `rejected` leva a |
 |---|---|---|---|
 | TRIAGEM | triage | AVISO | ORIENTADO |

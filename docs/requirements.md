@@ -5,7 +5,8 @@
 Sistema multiagente que cobre um recorte da pipeline de sinistro de seguros: da primeira mensagem
 do segurado (WhatsApp simulado) até a **conclusão da etapa de abertura do sinistro**.
 
-- Ramo: **automóvel**, tipo **colisão** (único na v1, ADR-0001).
+- Ramo: **automóvel**; tipos de sinistro: **colisão, roubo/furto, incêndio, evento da natureza e
+  vidros** (ADR-0018). Assistência e assuntos que não são sinistro são apenas orientados.
 - Tudo mockado; **somente dados sintéticos**.
 - Perguntas de pesquisa da dissertação: **[PREENCHER pelo autor]**. Enquanto isso, o sistema é
   instrumentado para as métricas da §5.

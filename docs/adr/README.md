@@ -2,7 +2,7 @@
 
 | ADR | Título | Status |
 |---|---|---|
-| [0001](0001-escopo-auto-colisao.md) | Escopo auto/colisão | proposto [CONFIRMAR] |
+| [0001](0001-escopo-auto-colisao.md) | Escopo auto/colisão | substituída (ADR-0018) |
 | [0002](0002-llm-configuravel.md) | LLM configurável, modelo único | substituída (ADR-0015) |
 | [0003](0003-stack.md) | Stack técnica | aceito |
 | [0004](0004-criterio-saida-documentos.md) | Critério de saída de Documentos | proposto [CONFIRMAR] |
@@ -19,3 +19,4 @@
 | [0015](0015-gateway-llm-formato-openai.md) | Gateway de LLM no formato OpenAI (Gemini) | aceito |
 | [0016](0016-aviso-completo-e-intencoes.md) | Aviso completo e intenções do Orquestrador | aceito |
 | [0017](0017-guardrails-llm-e-avaliacao.md) | Guardrails com LLM e desenho da avaliação | aceito |
+| [0018](0018-todos-os-sinistros-de-veiculo.md) | Todos os tipos de sinistro de veículo | aceito |

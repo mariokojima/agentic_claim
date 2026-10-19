@@ -91,16 +91,75 @@ scenarios:
       terminal_reason: rejected:no_coverage
       tools_forbidden: [open_claim]
 
-  - id: theft_not_collision
-    title: Roubo é orientado (fora do escopo do canal)
+  - id: theft_claim
+    title: Roubo com cobertura abre aviso e exige BO, CNH e CRLV
+    category: outros_sinistros
+    suites: [smoke, full]
+    customer: Ana
+    turns:
+      - "Oi"
+      - "{cpf}"
+      - "Roubaram meu carro ontem às 22h na Rua Augusta, 50"
+      - {text: "Seguem o BO, a CNH e o CRLV", documents: [boletim_ocorrencia, cnh, crlv]}
+    expected:
+      final_stage: CONCLUIDO
+      specialists: [triage, claim_notice, documents]
+      tools_required: *core_tools
+
+  - id: theft_no_coverage
+    title: Roubo sem cobertura na apólice é orientado
     category: evento_nao_coberto
     suites: [smoke, full]
     customer: Karina
     turns: ["Oi", "{cpf}", "Roubaram meu carro ontem"]
     expected:
       final_stage: ORIENTADO
-      terminal_reason: rejected:event_type_ROUBO_FURTO
+      terminal_reason: rejected:no_coverage
       tools_forbidden: [open_claim]
+
+  - id: glass_claim
+    title: Vidros pedem só CRLV e foto do vidro
+    category: outros_sinistros
+    suites: [full]
+    customer: João
+    turns:
+      - "Oi"
+      - "{cpf}"
+      - "o para-brisa trincou ontem na rodovia SP-280"
+      - {text: "segue", documents: [crlv, foto_dano_1_traseira]}
+    expected:
+      final_stage: CONCLUIDO
+      tools_required: *core_tools
+
+  - id: natural_event_claim
+    title: Alagamento abre aviso e pede os danos
+    category: outros_sinistros
+    suites: [full]
+    customer: Bruno
+    turns:
+      - "Oi"
+      - "{cpf}"
+      - "meu carro ficou alagado na enchente de ontem na Av. do Estado, 300"
+      - "o motor e os bancos ficaram danificados"
+      - {text: "docs", documents: *docs}
+    expected:
+      final_stage: CONCLUIDO
+      tools_required: *core_tools
+
+  - id: fire_claim
+    title: Incêndio exige BO além de fotos
+    category: outros_sinistros
+    suites: [full]
+    customer: Fabio
+    turns:
+      - "Oi"
+      - "{cpf}"
+      - "o carro pegou fogo ontem na Av. Brasil, 200, queimou o motor"
+      - {text: "docs", documents: *docs}
+      - {text: "BO", documents: [boletim_ocorrencia]}
+    expected:
+      final_stage: CONCLUIDO
+      tools_required: *core_tools
 
   - id: customer_not_found
     title: Cliente sem apólice
@@ -318,14 +377,14 @@ scenarios:
 
   - id: indirect_theft
     requires_llm: true
-    title: Roubo descrito de forma indireta (só LLM entende)
+    title: Roubo descrito de forma indireta (só LLM entende) — sem cobertura
     category: evento_nao_coberto
     suites: [full]
     customer: Karina
     turns: ["Oi", "{cpf}", "deixei o carro estacionado e quando voltei ele não estava mais lá"]
     expected:
       final_stage: ORIENTADO
-      terminal_reason: rejected:event_type_ROUBO_FURTO
+      terminal_reason: rejected:no_coverage
 
   - id: vague_location
     requires_llm: true

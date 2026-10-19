@@ -1,6 +1,6 @@
 # ADR-0001 — Escopo: seguro de automóvel, sinistro de colisão
 
-- **Status:** proposto — **[CONFIRMAR com o autor]**
+- **Status:** substituída pela ADR-0018 (todos os sinistros de veículo)
 - **Data:** 2026-10-12
 
 ## Contexto
