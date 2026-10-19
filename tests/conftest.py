@@ -18,6 +18,18 @@ from claims_agents.tools.resilience import ToolCallRecord
 FIXTURES_DIR = PROJECT_ROOT / "data" / "fixtures"
 
 
+@pytest.fixture(autouse=True)
+def no_real_llm(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Invariante: testes nunca chamam LLM real (o .env pode ter chave). Use FakeLLMClient."""
+    monkeypatch.setenv("CLAIMS_LLM__ENABLED", "false")
+
+    def forbidden(*args: object, **kwargs: object) -> None:
+        raise AssertionError("LLM real em teste: injete FakeLLMClient em GraphDeps.llm")
+
+    # bloqueia o SDK real; o gateway com `create` simulado (testes unitários) continua permitido
+    monkeypatch.setattr("openai.AsyncOpenAI", forbidden)
+
+
 @pytest.fixture(scope="session")
 def fixtures() -> tuple[list[Customer], list[Policy]]:
     return load_fixtures(FIXTURES_DIR)
