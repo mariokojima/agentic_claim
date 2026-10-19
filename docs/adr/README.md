@@ -3,7 +3,7 @@
 | ADR | Título | Status |
 |---|---|---|
 | [0001](0001-escopo-auto-colisao.md) | Escopo auto/colisão | proposto [CONFIRMAR] |
-| [0002](0002-llm-configuravel.md) | LLM configurável, modelo único | proposto [CONFIRMAR] |
+| [0002](0002-llm-configuravel.md) | LLM configurável, modelo único | substituída (ADR-0015) |
 | [0003](0003-stack.md) | Stack técnica | aceito |
 | [0004](0004-criterio-saida-documentos.md) | Critério de saída de Documentos | proposto [CONFIRMAR] |
 | [0005](0005-espera-multiturno.md) | Espera via `awaiting` (sem `interrupt()`) | aceito |
@@ -16,3 +16,4 @@
 | [0012](0012-modo-demonstracao.md) | Modo demonstração (atraso ilustrativo) | aceito |
 | [0013](0013-recusa-de-entrada-com-limite.md) | Bloqueio de entrada: recusa com limite | aceito |
 | [0014](0014-triagem-entende-o-ocorrido.md) | Triagem entende o ocorrido antes de abrir o aviso | aceito |
+| [0015](0015-gateway-llm-formato-openai.md) | Gateway de LLM no formato OpenAI (Gemini) | aceito |

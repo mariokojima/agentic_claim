@@ -1,6 +1,6 @@
 # ADR-0002 — Provedor de LLM configurável, modelo único
 
-- **Status:** proposto — **[CONFIRMAR]**
+- **Status:** substituída pela ADR-0015 (gateway no formato OpenAI, Gemini)
 - **Data:** 2026-10-12
 
 ## Contexto

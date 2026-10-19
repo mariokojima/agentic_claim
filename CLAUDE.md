@@ -35,7 +35,7 @@ configs/      models.yaml, settings.yaml, guardrails.yaml, triage_rules.yaml, do
 prompts/      prompts versionados (espelham agents/)
 data/         fixtures/ (clientes, apólices) · evaluation/ (cenários)
 src/claims_agents/
-  core/          settings, logging (mascara PII), fábrica de LLM, erros
+  core/          settings, logging (mascara PII), gateway de LLM (formato OpenAI), prompts, erros
   domain/        Customer, Policy, Claim, Document, enums
   state/         global_state.py (GlobalState), contracts.py (StageResult)
   graph/         build_graph.py, transitions.py, checkpointer.py
@@ -59,7 +59,8 @@ Cada especialista é um subgrafo: `graph.py`, `state.py`, `coordinator.py`, `sub
 4. **`claim_stage` só muda em `graph/transitions.py`.**
 5. **Prompts em `prompts/`** (versionados); modelos, regras e flags em `configs/`. Nada de prompt ou regra hardcoded.
 6. **Segredos só em `.env`** (nunca versionado). Use `.env.example` como modelo.
-7. **Sem LLM real em testes** unitários e de integração: use `FakeListChatModel` / respostas gravadas.
+7. **Sem LLM real em testes**: injete `FakeLLMClient` (`core/llm/fake.py`). LLM só via `LLMClient`
+   (gateway formato OpenAI, `core/llm`), injetado em `GraphDeps.llm`; nunca instanciar SDKs nos agentes.
 8. **Eventos do painel vêm de uma fonte única**: o adaptador de streaming (`observability/adapter.py`).
    Nós emitem eventos customizados via `get_stream_writer()`/helper `emit()`; nada de gravar no event store ad hoc.
 9. Especialistas só conhecem o contrato `StageResult`; não importam nada do Orquestrador.
@@ -85,5 +86,6 @@ Use-as ao estender o sistema; elas listam os arquivos a tocar e os testes exigid
 - Trabalho em fases (ver `docs/requirements.md` §Fases). Ao fim de cada fase: `make check`, resumo, aguardar aprovação.
 - Uma sessão por fase ou por subagente. Ler só os arquivos necessários; editar com `Edit`.
 - Delegar execução de testes, lint e leitura de logs a subagente de modelo menor, trazendo só o resumo.
-- Confirmar APIs de LangGraph/LangChain na documentação oficial (ou no código instalado em `.venv`) antes de usar algo novo.
+- Confirmar APIs de LangGraph/LangChain/openai na documentação oficial (ou no código instalado em `.venv`) antes de usar algo novo.
+- LLM: regras primeiro, LLM como fallback; degradar para regras em `LLMError`. Prompts em `prompts/` com `version`.
 - Respostas curtas; perguntar só o que bloqueia, agrupando dúvidas.

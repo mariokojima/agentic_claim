@@ -71,7 +71,7 @@ estourou → `ESCALADO_HUMANO`). Se `needs_input` ou terminal, segue para `guard
 
 | Especialista | Subagentes | Tools |
 |---|---|---|
-| triage | customer_validation, event_classification, decision (parties na Fase 3) | `get_customer_data`, `send_whatsapp` (outbox) |
+| triage | customer_validation → event_classification → decision → parties (envolvidos) | `get_customer_data`, `send_whatsapp` (outbox) |
 | claim_notice | event_data_collection, coverage_assessment, registration | `open_claim`, `send_whatsapp` (outbox) |
 | documents | checklist, intake_storage, validation, complement | `store_files`, `validate_document`, `send_whatsapp` (outbox) |
 
@@ -153,7 +153,19 @@ class AgentEvent(BaseModel):
 | POST | `/conversations/{id}/messages` | alternativa REST ao WebSocket (testes e runner de cenários) |
 | GET | `/simulator/customers` | clientes sintéticos para o simulador |
 
-## 8. Persistência
+## 8. LLM (ADR-0015)
+
+Gateway único `core/llm` no formato OpenAI (`chat.completions`), hoje apontando para o endpoint
+compatível do Gemini. Agentes recebem `LLMClient` por injeção (`GraphDeps.llm`; `None` = só
+regras). Padrão de uso: **regras primeiro, LLM como fallback**, com saída estruturada validada
+por Pydantic e degradação para regras em caso de `LLMError`. Prompts versionados em `prompts/`;
+cada chamada emite `llm_call` (modelo, tokens, latência, fallback, versão do prompt).
+
+Ao fim da Triagem, os guardrails são reexecutados com o contexto do segurado
+(`checkpoint=fim_triagem`, início da vigência e data do evento) — ex.: `recent_policy` escala a
+humano. A Triagem reinicia após `triage.inactivity_timeout_minutes` sem resposta.
+
+## 9. Persistência
 
 SQLite em `data/`: `checkpoints.db` (LangGraph), `claims.db` (mocks de domínio: clientes,
 apólices, sinistros, arquivos), `events.db` (event store). Arquivos enviados em `data/storage/`.
