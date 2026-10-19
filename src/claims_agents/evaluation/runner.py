@@ -286,10 +286,21 @@ async def run_experiment(
     concurrency: int = 1,
     llm: LLMClient | None = None,
 ) -> ExperimentRun:
+    owned = llm is None
     if llm is None:
         llm, skipped = build_llm(experiment, allow_real_llm)
         if skipped:
             return ExperimentRun(experiment=experiment, skipped=skipped)
+    try:
+        return await _run(experiment, scenarios, llm, concurrency)
+    finally:
+        if owned and isinstance(llm, OpenAICompatibleClient):
+            await llm.aclose()
+
+
+async def _run(
+    experiment: Experiment, scenarios: list[Scenario], llm: LLMClient | None, concurrency: int
+) -> ExperimentRun:
     pricing = experiment.models_config().get("pricing_usd_per_1m", {})
     customers = {c.name: c for c in load_fixtures(PROJECT_ROOT / "data" / "fixtures")[0]}
     start = time.perf_counter()

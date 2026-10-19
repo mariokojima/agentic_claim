@@ -40,6 +40,7 @@ class OpenAICompatibleClient:
 
     def __init__(self, config: LLMConfig, create: CreateFn | None = None) -> None:
         self.config = config
+        self._client: Any = None
         if create is None:
             from openai import AsyncOpenAI
 
@@ -54,7 +55,14 @@ class OpenAICompatibleClient:
                 timeout=config.default.timeout_s,
             )
             create = client.chat.completions.create
+            self._client = client
         self._create = create
+
+    async def aclose(self) -> None:
+        """Fecha o cliente HTTP do SDK (evita avisos ao encerrar o laço de eventos)."""
+        if self._client is not None:
+            await self._client.close()
+            self._client = None
 
     async def chat(
         self,
