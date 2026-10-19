@@ -75,7 +75,7 @@ estourou → `ESCALADO_HUMANO`). Se `needs_input` ou terminal, segue para `guard
 |---|---|---|
 | triage | customer_validation → event_classification → decision → parties (envolvidos) | `get_customer_data`, `send_whatsapp` (outbox) |
 | claim_notice | event_data_collection (quando/onde/o que/danos; LLM como fallback), coverage_assessment (pela apólice), registration | `open_claim`, `send_whatsapp` (outbox) |
-| documents | checklist, intake_storage, validation, complement | `store_files`, `validate_document`, `send_whatsapp` (outbox) |
+| documents | checklist, intake_storage, validation, complement (progresso, critério de saída e confirmação final) | `store_files`, `validate_document`, `send_whatsapp` (outbox) |
 
 Os especialistas são máquinas de estado retomáveis: o progresso fica no sub-estado namespaced
 (`triage`, `notice`, `documents`) e cada turno avança até precisar de input (`needs_input`).
@@ -150,6 +150,8 @@ class AgentEvent(BaseModel):
 | GET | `/events` | eventos persistidos (filtro por conversa) |
 | GET | `/metrics` | KPIs |
 | POST | `/control/pause` | pausa global ou por conversa |
+| POST | `/control/sweep` | verificador de inatividade (lembrete/timeout de documentos; também roda periodicamente) |
+| POST | `/conversations/{id}/simulate-idle` | simulador: dispara lembrete ou timeout |
 | POST | `/conversations/{id}/attachments` | upload de anexo (retorna referência usada na próxima mensagem); `simulate_metadata` preenche CPF/placa/data sintéticos, simulando OCR/EXIF |
 | GET | `/conversations/{id}` | estado resumido e histórico |
 | POST | `/conversations/{id}/messages` | alternativa REST ao WebSocket (testes e runner de cenários) |
@@ -167,7 +169,15 @@ Ao fim da Triagem, os guardrails são reexecutados com o contexto do segurado
 (`checkpoint=fim_triagem`, início da vigência e data do evento) — ex.: `recent_policy` escala a
 humano. A Triagem reinicia após `triage.inactivity_timeout_minutes` sem resposta.
 
-## 9. Persistência
+## 9. Inatividade em Documentos (ADR-0004)
+
+Disparos que não são mensagens do cliente chegam como `Inbound(kind="reminder"|"timeout")` e são
+tratados na recepção: lembrete com as pendências (uma vez por período de inatividade) ou
+`StageResult(failed, escalated_by="timeout_documentos")` → transição para `ESCALADO_HUMANO`.
+Quem dispara é o verificador da API (`ChatService.sweep`, laço a cada
+`documents.sweep_interval_seconds`); uma mensagem que chegue depois do prazo segue o mesmo caminho.
+
+## 10. Persistência
 
 SQLite em `data/`: `checkpoints.db` (LangGraph), `claims.db` (mocks de domínio: clientes,
 apólices, sinistros, arquivos), `events.db` (event store). Arquivos enviados em `data/storage/`.

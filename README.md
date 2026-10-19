@@ -33,7 +33,7 @@ Mensagem ─► Guardrails (entrada) ─► Orquestrador ─► Especialista da 
 | **Orquestrador** | Encaminha a mensagem ao especialista da etapa atual e trata desvios do roteiro: pedido de atendente, cancelamento, status, dúvidas, correções e assuntos fora do escopo. |
 | **Triagem** | Identifica o segurado (CPF), entende o que aconteceu (colisão, roubo, vidros, assistência…), checa a apólice pela data do acidente, identifica envolvidos e feridos e decide se o caso segue para o aviso ou só recebe uma orientação. |
 | **Aviso de Sinistro** | Coleta quando, onde, o que aconteceu e os danos, faz a avaliação preliminar de cobertura pela apólice e registra o aviso, gerando o protocolo. |
-| **Documentos** | Pede CNH, CRLV e fotos dos danos, armazena e valida os arquivos e solicita complementação até a conclusão. |
+| **Documentos** | Pede CNH, CRLV, fotos dos danos e, havendo terceiros ou feridos, o BO; armazena e valida os arquivos, informa o que já foi validado, solicita complementação (com lembrete e prazo) e envia a confirmação final. |
 
 Etapas do processo: `TRIAGEM → AVISO → DOCUMENTOS → CONCLUIDO`. Estados finais alternativos:
 `ORIENTADO` (não é um sinistro deste canal), `BLOQUEADO` (guardrail), `ESCALADO_HUMANO` e
@@ -94,6 +94,9 @@ make run DEMO_DELAY_MS=0                                                        
 ```
 
 > As latências medidas em modo demonstração **não** servem para a avaliação (ADR-0012).
+
+Para demonstrar o lembrete e o timeout de documentos sem esperar horas, use os botões do chat ou
+tempos curtos: `CLAIMS_DOCUMENTS__REMINDER_MINUTES=1 CLAIMS_DOCUMENTS__COMPLEMENT_TIMEOUT_MINUTES=2 make run`.
 
 Mudanças em `configs/` ou no backend só valem depois de reiniciar o `make run` (Ctrl+C e
 rodar de novo). Mudanças no frontend são aplicadas sozinhas ao recarregar a página.
@@ -168,7 +171,9 @@ podem ser anexados de uma vez. Já `public/_invalidos/` tem arquivos para testar
 | Apólice recém-contratada | Cliente Marina (`36270398908`): `no dia 12/10/2026 bati no poste, só eu, ninguém se feriu` | Checagem corporativa: `ESCALADO_HUMANO` |
 | Relato livre (com LLM) | `um cara entrou na contramão e pegou minha porta` | Entende colisão com terceiro e pergunta só se alguém se feriu |
 | Roubo dito de forma indireta (com LLM) | `deixei o carro estacionado e quando voltei ele não estava mais lá` | `ORIENTADO` (roubo/furto) |
-| Inatividade | Ficar mais de 60 min sem responder na Triagem | O atendimento reinicia |
+| Inatividade na Triagem | Ficar mais de 60 min sem responder | O atendimento reinicia |
+| Lembrete de documentos | Botão **⏰ Lembrete** no chat (etapa Documentos) ou 24h sem envio | Lista o que falta, com o protocolo |
+| Prazo de documentos expirado | Botão **⌛ Prazo expirado** ou 72h sem envio | `ESCALADO_HUMANO` (timeout_documentos) |
 | Pedir atendente | `quero falar com um atendente` (qualquer etapa) | `ESCALADO_HUMANO` |
 | Desistir | `desisto, pode cancelar o atendimento` | `CANCELADO` |
 | Status ou dúvida no meio do fluxo | `qual o status do meu sinistro?`, `tem franquia?` | Responde e repete a pergunta pendente |
@@ -253,6 +258,8 @@ tests/          unit/ integration/ e2e/
 | `WS /ws/events` | Eventos do painel em tempo real |
 | `GET /events`, `GET /metrics` | Eventos persistidos e KPIs |
 | `POST /control/pause` | Pausa global ou por conversa |
+| `POST /control/sweep` | Roda agora o verificador de inatividade (lembrete/timeout de documentos) |
+| `POST /conversations/{id}/simulate-idle` | Simulador: dispara lembrete ou timeout (`{"kind": "reminder"\|"timeout"}`) |
 
 A documentação interativa fica em http://localhost:8000/docs com a API rodando.
 
@@ -267,7 +274,7 @@ A documentação interativa fica em http://localhost:8000/docs com a API rodando
 | 2 | Guardrails base: regras determinísticas | ✅ |
 | 3 | Triagem completa: gateway de LLM (Gemini), envolvidos, vigência pela data, checagem corporativa, timeout | ✅ |
 | 4 | Aviso completo (danos, LLM na coleta, cobertura) + intenções no Orquestrador | ✅ |
-| 5 | Documentos completos (BO condicional, timeout de complementação) | ⏳ |
+| 5 | Documentos completos: BO condicional, lembrete e timeout, mensagem final | ✅ |
 | 6 | Guardrails com LLM, runner de cenários e métricas da dissertação | ⏳ |
 
 **Limitações atuais:** sem chave de LLM, relatos fora dos padrões das regras não são entendidos;
