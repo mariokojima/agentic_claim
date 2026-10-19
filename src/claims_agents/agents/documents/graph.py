@@ -27,7 +27,7 @@ def build_documents_graph(
     g.add_node("checklist", wrap(checklist.build(checklist_config, messages)))
     g.add_node("intake_storage", wrap(intake_storage.build(store_files, messages)))
     g.add_node("validation", wrap(validation.build(validate_document, messages)))
-    g.add_node("complement", wrap(complement.build(messages)))
+    g.add_node("complement", wrap(complement.build(messages, checklist_config)))
     g.add_edge(START, "checklist")
     for node, nxt in zip(coordinator.ORDER, coordinator.ORDER[1:], strict=False):
         g.add_conditional_edges(node, coordinator.after(node), {"end": END, nxt: nxt})

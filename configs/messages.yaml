@@ -27,15 +27,18 @@ notice:
 documents:
   request: "Para concluir a abertura, envie pelo clipe de anexos:\n{items}"
   reminder: "Estou aguardando os documentos. Ainda faltam:\n{items}"
-  pending: "Recebido! Ainda faltam:\n{items}"
+  reminder_timer: "Olá! Para concluir a abertura do sinistro {protocol}, ainda precisamos de:\n{items}\nÉ só enviar pelo clipe de anexos."
+  validated: "Já validei:\n{items}"
+  pending: "Ainda faltam:\n{items}"
   issues: "Alguns arquivos precisam ser reenviados:\n{issues}"
-  done: "Tudo certo, abertura do sinistro concluída!\nProtocolo: {protocol}\nDocumentos recebidos:\n{received}\nPróximos passos: nossa equipe fará a análise e você receberá as atualizações por aqui."
+  done: "Tudo certo, a abertura do sinistro foi concluída! ✅\nProtocolo: {protocol}\nResumo: {summary}\n\nDocumentos recebidos:\n{received}\n\nPróximos passos:\n1. Nossa equipe vai analisar o aviso e os documentos.\n2. Se necessário, entraremos em contato para agendar a vistoria do veículo.\n3. As atualizações chegarão por aqui; tenha o protocolo {protocol} em mãos."
   missing_type: "não foi possível identificar o tipo do documento"
 transition:
   refused: "Desculpe, não posso atender a esse pedido por este canal. Vamos continuar de onde paramos:"
   resume_default: "Como posso ajudar com o seu sinistro? Para começar, me conte o que aconteceu."
   blocked: "Não posso dar continuidade a esta solicitação por este canal. O atendimento foi encerrado."
   escalated: "Vou transferir seu atendimento para um de nossos especialistas humanos."
+  documents_timeout: "Como não recebemos os documentos dentro do prazo, seu aviso foi encaminhado a um especialista, que entrará em contato para dar continuidade."
   cancelled: "Tudo bem, encerrei o atendimento a seu pedido. Se precisar, é só enviar uma nova mensagem."
   failed: "Tivemos um problema para concluir esta etapa. Um especialista humano dará continuidade ao seu atendimento."
 orchestrator:
