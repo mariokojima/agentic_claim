@@ -11,6 +11,7 @@ class ClaimStage(StrEnum):
     ORIENTADO = "ORIENTADO"
     BLOQUEADO = "BLOQUEADO"
     ESCALADO_HUMANO = "ESCALADO_HUMANO"
+    CANCELADO = "CANCELADO"  # o cliente desistiu (intenção "cancelar")
 
     @property
     def is_terminal(self) -> bool:
@@ -18,7 +19,13 @@ class ClaimStage(StrEnum):
 
 
 TERMINAL_STAGES = frozenset(
-    {ClaimStage.CONCLUIDO, ClaimStage.ORIENTADO, ClaimStage.BLOQUEADO, ClaimStage.ESCALADO_HUMANO}
+    {
+        ClaimStage.CONCLUIDO,
+        ClaimStage.ORIENTADO,
+        ClaimStage.BLOQUEADO,
+        ClaimStage.ESCALADO_HUMANO,
+        ClaimStage.CANCELADO,
+    }
 )
 
 

@@ -83,7 +83,7 @@ async def test_false_positive_passes(graph: Graph, happy_customer: Customer) -> 
         conv,
         text(
             "Ontem, na Av. Brasil, o outro motorista ignorou o sinal vermelho e bateu em mim."
-            " Ninguém se feriu"
+            " Ninguém se feriu. Amassou a porta"
         ),
     )
     assert r.state.claim_stage == ClaimStage.DOCUMENTOS and r.state.input_blocks == 0

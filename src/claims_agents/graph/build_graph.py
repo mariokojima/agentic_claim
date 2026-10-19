@@ -41,7 +41,9 @@ def build_graph(
     g.add_edge(START, "receive")
     g.add_conditional_edges("receive", route_by_state, ["guardrails_in", "guardrails_out"])
     g.add_conditional_edges("guardrails_in", route_by_state, ["orchestrator", "transition"])
-    g.add_conditional_edges("orchestrator", route_by_state, SPECIALISTS)
+    g.add_conditional_edges(
+        "orchestrator", route_by_state, [*SPECIALISTS, "transition", "guardrails_out"]
+    )
     for specialist in SPECIALISTS:
         g.add_edge(specialist, "transition")
     g.add_conditional_edges("transition", route_by_state, ["orchestrator", "guardrails_out"])

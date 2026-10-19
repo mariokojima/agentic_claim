@@ -53,7 +53,9 @@ async def test_asks_what_happened_before_mentioning_claim(
     assert r.state.customer is not None and r.state.customer.policy_number == "AUTO-0001-01"
     assert "colisão" in replies(r) and "quando aconteceu" in replies(r)
     assert "o que aconteceu (ex" not in replies(r)  # a Triagem já entendeu o ocorrido
-    r = await run_turn(graph, "t1", text("foi ontem às 18h na Av. Paulista, 1000"))
+    r = await run_turn(
+        graph, "t1", text("foi ontem às 18h na Av. Paulista, 1000; amassou o para-choque")
+    )
     assert r.state.claim_stage == ClaimStage.DOCUMENTOS and r.state.protocol
 
 
@@ -61,7 +63,10 @@ async def test_initial_message_is_reused(graph: Graph, happy_customer: Customer)
     await run_turn(
         graph,
         "t2",
-        text("Oi, bati o carro sozinho ontem às 9h na Av. Brasil, 200, ninguém se feriu"),
+        text(
+            "Oi, bati o carro sozinho ontem às 9h na Av. Brasil, 200, ninguém se feriu."
+            " Amassei a frente"
+        ),
     )
     r = await run_turn(graph, "t2", text(happy_customer.cpf))
     assert r.state.claim_stage == ClaimStage.DOCUMENTOS  # nada a perguntar: aviso já registrado

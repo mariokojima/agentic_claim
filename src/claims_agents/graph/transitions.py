@@ -78,6 +78,14 @@ def decide_transition(
             reason=f"Aguardando cliente: {result.reason}",
             next_node="guardrails_out",
         )
+    if result.status == "rejected" and result.payload.get("cancelled_by"):
+        return TransitionOutcome(
+            new_stage=ClaimStage.CANCELADO,
+            reason=result.reason,
+            next_node="guardrails_out",
+            message_key="transition.cancelled",
+            terminal_reason=f"cancelado:{result.payload['cancelled_by']}",
+        )
     if result.status == "failed" and result.payload.get("escalated_by"):
         return TransitionOutcome(
             new_stage=ClaimStage.ESCALADO_HUMANO,

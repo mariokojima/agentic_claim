@@ -139,7 +139,9 @@ async def test_no_third_parties_no_police_report(
     await run_turn(graph, "p3", text("Oi"))
     await run_turn(graph, "p3", text(happy_customer.cpf))
     r = await run_turn(
-        graph, "p3", text("ontem bati sozinho no poste da Rua Augusta, 50; ninguém se feriu")
+        graph,
+        "p3",
+        text("ontem bati sozinho no poste da Rua Augusta, 50; ninguém se feriu; amassou a frente"),
     )
     assert r.state.claim_stage == ClaimStage.DOCUMENTOS and "Boletim" not in replies(r)
 

@@ -3,7 +3,8 @@ data_dir: data
 graph:
   max_hops_per_turn: 5
 orchestrator:
-  intent_llm_enabled: false
+  intents_enabled: true        # desvios do roteiro por regras (configs/orchestrator.yaml)
+  intent_llm_enabled: false    # true: o LLM classifica a intenção quando as regras não resolvem
 triage:
   max_attempts_per_field: 3
   inactivity_timeout_minutes: 60   # sem resposta por mais que isso, a Triagem recomeça

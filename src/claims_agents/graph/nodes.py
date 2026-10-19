@@ -12,7 +12,7 @@ from claims_agents.agents.documents.graph import build_documents_graph
 from claims_agents.agents.documents.state import DocumentsGraphState
 from claims_agents.agents.guardrails.graph import build_guardrails_graph
 from claims_agents.agents.guardrails.state import GuardrailGraphState
-from claims_agents.agents.orchestrator.intent import classify_intent
+from claims_agents.agents.orchestrator.intent import IntentClassifier, IntentResult
 from claims_agents.agents.orchestrator.routing_policy import route
 from claims_agents.agents.triage.graph import build_triage_graph
 from claims_agents.agents.triage.state import TriageGraphState
@@ -38,6 +38,11 @@ from claims_agents.state import (
 from claims_agents.tools.schemas import SendWhatsappRequest
 
 Node = Callable[[GlobalState], Awaitable[dict[str, Any]]]
+STAGE_LABELS = {
+    "TRIAGEM": "Triagem",
+    "AVISO": "Aviso de Sinistro",
+    "DOCUMENTOS": "Documentos",
+}
 RESULT_STATUS: dict[str, EventStatus] = {
     "completed": "completed",
     "needs_input": "completed",
@@ -56,12 +61,18 @@ class MainNodes:
         reg, msgs = deps.registry, deps.messages
         attempts = deps.settings.triage.max_attempts_per_field
         self.guardrails = build_guardrails_graph(deps.guardrails_config)
+        self.intents = IntentClassifier(
+            deps.orchestrator_config,
+            deps.llm if deps.settings.orchestrator.intent_llm_enabled else None,
+        )
         wrap = demo_wrapper(deps.settings.demo.subagent_delay_ms)
         llm = deps.llm if deps.settings.triage.llm_fallback else None
         self.triage_graph = build_triage_graph(
             reg.get_customer_data, deps.triage_rules, msgs, attempts, wrap, llm=llm
         )
-        self.notice_graph = build_claim_notice_graph(reg.open_claim, msgs, attempts, wrap)
+        self.notice_graph = build_claim_notice_graph(
+            reg.open_claim, msgs, attempts, wrap, llm=deps.llm
+        )
         self.documents_graph = build_documents_graph(
             reg.store_files, reg.validate_document, deps.checklist, msgs, wrap
         )
@@ -198,17 +209,81 @@ class MainNodes:
     # --- orquestrador ---------------------------------------------------------------------------
 
     async def orchestrator(self, state: GlobalState) -> dict[str, Any]:
-        intent = None
-        if self.deps.settings.orchestrator.intent_llm_enabled and state.inbound and state.hops == 0:
-            intent = await classify_intent(state.inbound.text)
-            emit("intent_classified", details=f"Intenção: {intent}", data={"intent": intent})
+        intent: IntentResult | None = None
+        updates: dict[str, Any] = {}
+        if self.deps.settings.orchestrator.intents_enabled and state.inbound and state.hops == 0:
+            intent = await self.intents.classify(
+                state.inbound.text,
+                stage=state.claim_stage.value,
+                question=state.pending_question or "",
+                has_attachments=bool(state.inbound.attachments),
+            )
+            emit(
+                "intent_classified",
+                status="completed" if intent.intent == "continuar_etapa" else "warning",
+                details=f"{intent.intent} (via {intent.source})"
+                + (f": {intent.detail}" if intent.detail else ""),
+                data=intent.model_dump(),
+            )
+            handled = self._handle_intent(state, intent)
+            if handled is not None:
+                return handled
+            if intent.intent == "corrigir_dado_anterior":
+                updates = self._record_correction(state)
         decision = route(state.claim_stage, state.awaiting)
         emit(
             "route",
             details=f"→ {decision.target}: {decision.reason}",
-            data={"target": decision.target, "stage": state.claim_stage.value, "intent": intent},
+            data={
+                "target": decision.target,
+                "stage": state.claim_stage.value,
+                "intent": intent.intent if intent else None,
+            },
         )
-        return {"route": decision.target}
+        return updates | {"route": decision.target}
+
+    def _handle_intent(self, state: GlobalState, intent: IntentResult) -> dict[str, Any] | None:
+        """Desvios do roteiro. Mudança de etapa (humano/cancelar) sempre via transição."""
+        msgs = self.deps.messages
+        if intent.intent == "falar_com_humano":
+            result = StageResult(
+                status="failed",
+                reason="Cliente pediu atendimento humano",
+                payload={"escalated_by": "pedido_cliente"},
+            )
+            return {"route": "transition", "last_result": result}
+        if intent.intent == "cancelar":
+            result = StageResult(
+                status="rejected",
+                reason="Cliente desistiu do atendimento",
+                payload={"cancelled_by": "cliente"},
+            )
+            return {"route": "transition", "last_result": result}
+        if intent.intent in ("status", "duvida", "fora_de_escopo"):
+            if intent.intent == "status":
+                info = f" Protocolo: {state.protocol}." if state.protocol else ""
+                text = msgs.get(
+                    "orchestrator.status",
+                    stage=STAGE_LABELS.get(state.claim_stage.value, state.claim_stage.value),
+                    protocol_info=info,
+                )
+            else:
+                text = msgs.get(f"orchestrator.{intent.intent}")
+            text = f"{text}\n\n{msgs.get('orchestrator.resume')} {self._pending_question(state)}"
+            return {
+                "route": "guardrails_out",
+                "outbox": [*state.outbox, OutboxMessage(text=text, source="orchestrator")],
+            }
+        return None
+
+    def _record_correction(self, state: GlobalState) -> dict[str, Any]:
+        """ADR-0010: a correção é registrada e reconfirmada na etapa atual (sem regressão)."""
+        correction = state.inbound.text if state.inbound else ""
+        emit("correction_recorded", status="warning", details=_preview(correction))
+        note = OutboxMessage(
+            text=self.deps.messages.get("orchestrator.correction"), source="orchestrator"
+        )
+        return {"corrections": [*state.corrections, correction], "outbox": [*state.outbox, note]}
 
     # --- especialistas --------------------------------------------------------------------------
 
@@ -226,6 +301,8 @@ class MainNodes:
         if result.user_message:
             text = await self._rewrite(result.user_message)
             updates["outbox"] = [*state.outbox, OutboxMessage(text=text, source=source)]
+            if result.status == "needs_input":
+                updates["pending_question"] = text
         emit(
             "stage_result",
             agent=source,
@@ -314,6 +391,7 @@ class MainNodes:
                     for k in ("has_third_parties", "has_injuries")
                 },
                 known_what="colisão" if state.triage.outcome.get("event_type") == "COLISAO" else "",
+                coverages=self._policy_coverages(state),
                 customer=state.customer,
                 sub=state.notice,
             )
@@ -323,6 +401,14 @@ class MainNodes:
         if out.get("protocol"):
             updates["protocol"] = out["protocol"]
         return updates
+
+    @staticmethod
+    def _policy_coverages(state: GlobalState) -> list[str]:
+        number = state.customer.policy_number if state.customer else None
+        for policy in state.triage.outcome.get("policies", []):
+            if policy.get("number") == number:
+                return [str(c) for c in policy.get("coverages", [])]
+        return []
 
     async def documents(self, state: GlobalState) -> dict[str, Any]:
         out = await self.documents_graph.ainvoke(
@@ -390,12 +476,9 @@ class MainNodes:
         return updates
 
     def _pending_question(self, state: GlobalState) -> str:
-        """Última pergunta feita ao cliente (para retomar após uma recusa)."""
-        refused = self.deps.messages.get("transition.refused")
-        for msg in reversed(state.messages):
-            if msg.role == "assistant" and state.awaiting is not None:
-                # recusas seguidas: não repetir o prefixo de recusa da mensagem anterior
-                return msg.text.removeprefix(refused).strip()
+        """Pergunta pendente (guardada quando o especialista a fez), para retomar após desvios."""
+        if state.awaiting is not None and state.pending_question:
+            return state.pending_question
         return self.deps.messages.get("transition.resume_default")
 
     # --- envio (único ponto que chama send_whatsapp) --------------------------------------------

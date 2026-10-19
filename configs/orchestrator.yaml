@@ -1,0 +1,25 @@
+# Intenções do Orquestrador (Fase 4, ADR-0016). Regras sempre ativas (orchestrator.intents_enabled);
+# o LLM só classifica mensagens que as regras não resolvem, atrás de orchestrator.intent_llm_enabled.
+# Ordem = prioridade. "continuar_etapa" é o padrão (resposta à pergunta pendente).
+intents:
+  falar_com_humano:
+    - "(?i)\\b(falar|conversar|atendimento)\\s+(com\\s+)?(um[a]?\\s+)?(atendente|humano|pessoa|corretor|gerente|operador)\\b"
+    - "(?i)\\bquero\\s+(um[a]?\\s+)?(atendente|humano|pessoa\\s+de\\s+verdade)\\b"
+    - "(?i)\\bn[aã]o\\s+quero\\s+falar\\s+com\\s+(rob[oô]|bot|m[aá]quina)\\b"
+    - "(?i)\\b(falar|conversar)\\s+com\\s+algu[eé]m\\s+(da\\s+(equipe|seguradora)|de\\s+verdade)\\b"
+  cancelar:
+    - "(?i)\\b(cancel\\w*|encerr\\w*)\\s+(o\\s+|este\\s+|esse\\s+|meu\\s+)?(atendimento|aviso|sinistro|abertura|pedido|processo|chamado)\\b"
+    - "(?i)\\b(desisti|desisto|desistir|deixa\\s+(pra|para)\\s+l[aá]|pode\\s+cancelar)\\b"
+    - "(?i)\\bn[aã]o\\s+quero\\s+mais\\s+(abrir|seguir|continuar|prosseguir)\\b"
+  status:
+    - "(?i)\\b(qual\\s+(o\\s+|é\\s+o\\s+)?(status|andamento)|em\\s+que\\s+(etapa|p[eé])|como\\s+(est[aá]|anda)\\s+(o\\s+|meu\\s+)?(processo|sinistro|pedido|aviso|atendimento))\\b"
+    - "(?i)\\b(qual\\s+(é\\s+)?(o\\s+)?(meu\\s+)?(n[uú]mero\\s+(do|de)\\s+)?protocolo|status\\s+do\\s+(meu\\s+)?(sinistro|aviso|pedido))\\b"
+  corrigir_dado_anterior:
+    - "(?i)\\b(corrig\\w*|me\\s+enganei|errei|digitei\\s+errado|informei\\s+errado|na\\s+verdade\\s+(foi|era|é))\\b"
+  duvida:
+    - "(?i)\\b(como\\s+funciona|quanto\\s+(tempo|custa|demora|vou\\s+pagar)|franquia|qual\\s+(o\\s+)?prazo|preciso\\s+pagar|o\\s+que\\s+(é|significa)|carro\\s+reserva)\\b"
+
+# Respostas a desvios sem custo de LLM (as do LLM usam as mesmas mensagens)
+llm:
+  min_words: 3          # mensagens curtas ("sim", "não", CPF) não vão ao LLM
+  min_confidence: 0.6   # abaixo disso, considera continuar_etapa

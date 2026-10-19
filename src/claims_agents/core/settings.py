@@ -27,7 +27,8 @@ class GraphSettings(BaseModel):
 
 
 class OrchestratorSettings(BaseModel):
-    intent_llm_enabled: bool = False
+    intents_enabled: bool = True  # desvios por regras (humano, cancelar, status, dúvida...)
+    intent_llm_enabled: bool = False  # LLM classifica o que as regras não resolvem
 
 
 class TriageSettings(BaseModel):

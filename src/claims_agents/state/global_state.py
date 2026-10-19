@@ -129,3 +129,5 @@ class GlobalState(BaseModel):
     turn_input_decision: GuardrailDecision | None = None
     turns: int = 0
     input_blocks: int = 0  # mensagens recusadas pelo guardrail de entrada (ADR-0013)
+    pending_question: str | None = None  # última pergunta feita ao cliente (para retomar)
+    corrections: list[str] = Field(default_factory=list)  # correções informadas (ADR-0010)

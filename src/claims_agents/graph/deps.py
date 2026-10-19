@@ -23,6 +23,7 @@ class GraphDeps:
     guardrails_config: dict[str, Any] = field(default_factory=lambda: load_config("guardrails"))
     triage_rules: dict[str, Any] = field(default_factory=lambda: load_config("triage_rules"))
     checklist: dict[str, Any] = field(default_factory=lambda: load_config("documents_checklist"))
+    orchestrator_config: dict[str, Any] = field(default_factory=lambda: load_config("orchestrator"))
     # LLM injetado explicitamente (None = só regras; testes usam FakeLLMClient)
     llm: LLMClient | None = None
     now: Callable[[], datetime] = field(default=lambda: datetime.now(UTC))

@@ -18,8 +18,12 @@ notice:
   missing_when: "• quando aconteceu (data, ex.: hoje, ontem, 12/10 — e a hora, se souber)"
   missing_where: "• onde aconteceu (rua/avenida e número, rodovia ou ponto de referência)"
   missing_what: "• o que aconteceu (ex.: bati na traseira de outro carro, fui atingido no cruzamento)"
+  missing_damages: "• quais partes do veículo foram danificadas (ex.: para-choque traseiro, porta do motorista)"
   future_date: "A data informada ({date}) está no futuro. Pode confirmar quando o acidente aconteceu?"
-  registered: "Aviso registrado com sucesso! Seu protocolo é {protocol}.\nResumo: {when} — {location}."
+  registered: "Aviso registrado com sucesso! Seu protocolo é {protocol}.\nResumo: {when} — {location}. Danos: {damages}."
+  coverage: "Avaliação preliminar: o evento está entre as coberturas da sua apólice{third_party}. A confirmação depende da análise da equipe."
+  third_party_included: "; a apólice inclui cobertura para danos a terceiros"
+  third_party_not_included: "; a apólice não inclui cobertura para danos a terceiros"
 documents:
   request: "Para concluir a abertura, envie pelo clipe de anexos:\n{items}"
   reminder: "Estou aguardando os documentos. Ainda faltam:\n{items}"
@@ -32,7 +36,14 @@ transition:
   resume_default: "Como posso ajudar com o seu sinistro? Para começar, me conte o que aconteceu."
   blocked: "Não posso dar continuidade a esta solicitação por este canal. O atendimento foi encerrado."
   escalated: "Vou transferir seu atendimento para um de nossos especialistas humanos."
+  cancelled: "Tudo bem, encerrei o atendimento a seu pedido. Se precisar, é só enviar uma nova mensagem."
   failed: "Tivemos um problema para concluir esta etapa. Um especialista humano dará continuidade ao seu atendimento."
+orchestrator:
+  status: "Seu atendimento está na etapa {stage}.{protocol_info}"
+  duvida: "Posso ajudar com a abertura do sinistro por aqui. Dúvidas sobre franquia, prazos, valores e cobertura serão esclarecidas pela equipe após a análise do aviso."
+  fora_de_escopo: "Este canal é dedicado à abertura de sinistros de automóvel, então não consigo ajudar com esse assunto por aqui."
+  resume: "Vamos continuar:"
+  correction: "Anotei sua correção; ela será considerada na análise."
 system:
   closed: "Este atendimento já foi encerrado ({stage}).{protocol_info}"
   output_blocked: "Desculpe, não consegui gerar uma resposta adequada. Um atendente dará continuidade."

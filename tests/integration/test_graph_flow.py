@@ -94,7 +94,10 @@ async def test_documents_complement_loop(
     await run_turn(
         graph,
         conv,
-        text("Ontem bati o carro sozinho no estacionamento do mercado, ninguém se feriu"),
+        text(
+            "Ontem bati o carro sozinho no estacionamento do mercado, ninguém se feriu."
+            " Amassou o para-choque"
+        ),
     )
     partial = [
         attachment(tmp_path, DocumentType.CNH, {"cpf": happy_customer.cpf}),
