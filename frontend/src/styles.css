@@ -51,6 +51,7 @@ button { font: inherit; cursor: pointer; }
 .stage-CONCLUIDO { background: #e3f6ea; color: var(--green); }
 .stage-ORIENTADO { background: #fff4d6; color: #9a6b00; }
 .stage-BLOQUEADO, .stage-ESCALADO_HUMANO { background: #fde7e7; color: var(--red); }
+.stage-CANCELADO { background: #eef0f3; color: var(--muted); }
 .protocol-bar { font-size: 12px; text-align: center; background: #eef7f1; color: var(--green); padding: 4px; }
 .chat-body { flex: 1; overflow-y: auto; background: var(--wa-bg); padding: 10px; display: flex; flex-direction: column; gap: 6px; }
 .day-chip { align-self: center; background: #fff; border-radius: 8px; padding: 3px 10px; font-size: 12px; color: var(--muted); margin-bottom: 4px; }

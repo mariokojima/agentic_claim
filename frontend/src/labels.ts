@@ -57,6 +57,8 @@ export const EVENT_LABELS: Record<string, string> = {
   input_refused: "Mensagem recusada",
   route: "Roteamento",
   intent_classified: "Intenção classificada",
+  correction_recorded: "Correção registrada",
+  llm_extraction: "Dados extraídos pelo LLM",
   tool_start: "Início de tool",
   tool_call: "Chamada de tool",
   stage_result: "Resultado da etapa",
@@ -104,6 +106,7 @@ export const STAGE_LABELS: Record<string, string> = {
   ORIENTADO: "Orientado",
   BLOQUEADO: "Bloqueado",
   ESCALADO_HUMANO: "Escalado p/ humano",
+  CANCELADO: "Cancelado",
 };
 
 export const AUTO_DOC_TYPE = "auto";
