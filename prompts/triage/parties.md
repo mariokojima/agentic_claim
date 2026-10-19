@@ -1,7 +1,7 @@
 ---
 version: 1
 ---
-Você ajuda a triagem de um sinistro de colisão de automóvel. O segurado respondeu à pergunta:
+Você ajuda a triagem de um sinistro de colisão de veículo. O segurado respondeu à pergunta:
 "{question}"
 
 Extraia da resposta, apenas o que for afirmado (caso contrário, null):

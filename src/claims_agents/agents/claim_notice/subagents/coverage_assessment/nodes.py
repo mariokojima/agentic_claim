@@ -15,10 +15,20 @@ from claims_agents.state import StageResult
 NAME = "coverage_assessment"
 
 
-def assess(coverages: list[str], has_third_parties: bool) -> CoverageAssessment:
-    covered = "COLISAO" in coverages
+COVERAGE_LABELS = {
+    "COLISAO": "colisão (casco)",
+    "ROUBO_FURTO": "roubo e furto",
+    "INCENDIO": "incêndio",
+    "VIDROS": "vidros",
+}
+
+
+def assess(
+    coverages: list[str], has_third_parties: bool, required: str = "COLISAO"
+) -> CoverageAssessment:
+    covered = required in coverages
     third = ("TERCEIROS" in coverages) if has_third_parties else None
-    reason = "Cobertura de colisão " + (
+    reason = f"Cobertura de {COVERAGE_LABELS.get(required, required)} " + (
         "identificada na apólice" if covered else "ausente na apólice"
     )
     if third is not None:
@@ -28,7 +38,9 @@ def assess(coverages: list[str], has_third_parties: bool) -> CoverageAssessment:
 
 def coverage_assessment(state: NoticeGraphState) -> dict[str, Any]:
     sub = state.sub.model_copy(deep=True)
-    result = assess(state.coverages, bool(sub.event.get("has_third_parties")))
+    result = assess(
+        state.coverages, bool(sub.event.get("has_third_parties")), state.required_coverage
+    )
     sub.event = dict(sub.event) | {"coverage": result.model_dump()}
     emit(
         "coverage_assessed",

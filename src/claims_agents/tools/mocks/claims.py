@@ -1,5 +1,6 @@
 """Mock de `open_claim`: valida cliente/apólice e gera protocolo sequencial."""
 
+import json
 from datetime import UTC, datetime
 
 from claims_agents.core.errors import InvalidRequest, NotFound
@@ -34,7 +35,7 @@ class MockOpenClaim:
                     protocol,
                     req.customer_id,
                     req.policy_number,
-                    req.event.model_dump_json(),
+                    json.dumps({"claim_type": req.claim_type} | req.event.model_dump(mode="json")),
                     opened_at.isoformat(),
                 ),
             )

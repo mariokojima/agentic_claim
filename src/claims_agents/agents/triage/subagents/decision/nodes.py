@@ -6,6 +6,7 @@ from collections.abc import Callable
 from datetime import date
 from typing import Any
 
+from claims_agents.agents.triage.completion import triage_completed
 from claims_agents.agents.triage.state import TriageGraphState
 from claims_agents.agents.triage.subagents.decision.schemas import EligibilityDecision
 from claims_agents.core.messages import Messages
@@ -20,17 +21,20 @@ def decide(
     policies: list[dict[str, Any]],
     rules: dict[str, Any],
     event_date: date,
-    event_type: str | None = "COLISAO",
+    event_type: str | None,
+    claim_types: dict[str, Any],
 ) -> EligibilityDecision:
     """Escolhe a primeira apólice elegível; senão, devolve o motivo mais específico.
 
-    Ordem: cliente inexistente → tipo de ocorrido fora do escopo → regras da apólice.
+    Ordem: cliente inexistente → ocorrido que não abre aviso → regras da apólice (status,
+    vigência pela data do evento, cobertura exigida para o tipo — configs/claim_types.yaml).
     """
     elig = rules["eligibility"]
     if not policies:
         return EligibilityDecision(eligible=False, reason="customer_not_found")
-    if event_type not in elig["accepted_event_types"]:
+    if event_type not in claim_types:
         return EligibilityDecision(eligible=False, reason=f"event_type_{event_type}")
+    required_coverage = claim_types[event_type]["coverage"]
     reasons: list[str] = []
     for p in policies:
         if p["status"] != elig["required_policy_status"]:
@@ -40,7 +44,7 @@ def decide(
         if elig.get("event_must_be_within_policy_term") and not start <= event_date <= end:
             reasons.append("outside_policy_term")
             continue
-        if elig["required_coverage"] not in p["coverages"]:
+        if required_coverage not in p["coverages"]:
             reasons.append("no_coverage")
             continue
         return EligibilityDecision(
@@ -54,7 +58,10 @@ def decide(
 
 
 def build(
-    rules: dict[str, Any], messages: Messages, today: Callable[[], date] = date.today
+    rules: dict[str, Any],
+    messages: Messages,
+    claim_types: dict[str, Any],
+    today: Callable[[], date] = date.today,
 ) -> NodeFn[TriageGraphState]:
     def decision(state: TriageGraphState) -> dict[str, Any]:
         sub = state.sub.model_copy(deep=True)
@@ -62,7 +69,7 @@ def build(
         # vigência checada pela data do acidente, quando informada (senão, hoje)
         known_date = sub.outcome.get("event_date")
         event_date = date.fromisoformat(known_date) if known_date else today()
-        result = decide(sub.outcome.get("policies", []), rules, event_date, event_type)
+        result = decide(sub.outcome.get("policies", []), rules, event_date, event_type, claim_types)
         sub.step = "done"  # rejeitado; se elegível, vira "parties" abaixo
         sub.outcome["decision"] = result.model_dump()
         emit(
@@ -79,8 +86,10 @@ def build(
                     status="rejected",
                     reason=result.reason,
                     payload={"rejection": result.reason},
-                    user_message=rules["rejection_messages"].get(
-                        result.reason, rules["rejection_messages"]["event_type_out_of_scope"]
+                    user_message=rules["rejection_messages"]
+                    .get(result.reason, rules["rejection_messages"]["event_type_out_of_scope"])
+                    .format(
+                        event=claim_types.get(event_type or "", {}).get("label", "este evento")
                     ),
                 ),
             }
@@ -94,8 +103,10 @@ def build(
             if state.customer
             else None
         )
-        # elegível: segue para os envolvidos, que concluem a Triagem
-        sub.step = "parties"
-        return {"sub": sub, "customer": customer}
+        # elegível: colisão pergunta envolvidos/feridos; os demais tipos concluem aqui
+        if claim_types[str(event_type)].get("parties", False):
+            sub.step = "parties"
+            return {"sub": sub, "customer": customer}
+        return {"sub": sub, "customer": customer, "result": triage_completed(sub.outcome, messages)}
 
     return decision

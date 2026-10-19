@@ -3,9 +3,10 @@
 
 # Classificação do ocorrido por palavras-chave (regex, ignora maiúsculas). A primeira categoria da
 # lista `priority` que casar vence (ex.: "bati e quebrou o para-brisa" → COLISAO, não VIDROS).
-# A extração por LLM (Fase 3) mantém as mesmas categorias.
+# A extração por LLM (Fase 3) mantém as mesmas categorias. Os tipos que abrem aviso estão em
+# configs/claim_types.yaml; ASSISTENCIA e NAO_SINISTRO são apenas orientados.
 event_classification:
-  priority: [ROUBO_FURTO, INCENDIO, COLISAO, FENOMENO_NATURAL, VIDROS, ASSISTENCIA, NAO_SINISTRO]
+  priority: [ROUBO_FURTO, INCENDIO, FENOMENO_NATURAL, COLISAO, VIDROS, ASSISTENCIA, NAO_SINISTRO]
   labels:
     COLISAO: "colisão (acidente de trânsito)"
     ROUBO_FURTO: "roubo ou furto"
@@ -54,22 +55,17 @@ parties:
     - "(?i)\\b(ferid\\w*|machuc\\w*|hospital|ambul[aâ]ncia|samu|v[ií]tima|sangr\\w*|desmai\\w*)\\b"
 
 eligibility:
-  accepted_event_types: [COLISAO]
+  # tipos aceitos e cobertura exigida por tipo: configs/claim_types.yaml (ADR-0018)
   required_policy_status: ATIVA
-  required_coverage: COLISAO
   event_must_be_within_policy_term: true
 
 rejection_messages:
   customer_not_found: "Não localizamos uma apólice com esses dados. Por favor, entre em contato com seu corretor."
   policy_not_active: "Sua apólice não está ativa no momento, por isso não é possível abrir o aviso por aqui. Seu corretor poderá orientar os próximos passos."
   outside_policy_term: "A data do evento está fora da vigência da apólice. Seu corretor poderá orientar os próximos passos."
-  no_coverage: "Sua apólice não possui cobertura de colisão. Seu corretor poderá orientar sobre outras opções."
-  event_type_out_of_scope: "Neste canal atendemos apenas avisos de colisão. Para outros eventos, entre em contato com a central."
-  # Orientação específica por tipo de ocorrido (fora do escopo deste canal)
-  event_type_ROUBO_FURTO: "Sinto muito pelo ocorrido. Em caso de roubo ou furto, registre o boletim de ocorrência e acione a central de sinistros pelo telefone 0800 000 0000 (fictício). Este canal atende apenas avisos de colisão."
-  event_type_INCENDIO: "Sinto muito pelo ocorrido. Para incêndio, acione a central de sinistros pelo telefone 0800 000 0000 (fictício), que dará o atendimento adequado. Este canal atende apenas avisos de colisão."
-  event_type_FENOMENO_NATURAL: "Sinto muito pelo ocorrido. Danos causados por eventos da natureza são atendidos pela central de sinistros no 0800 000 0000 (fictício). Este canal atende apenas avisos de colisão."
-  event_type_VIDROS: "Para danos em vidros, faróis ou retrovisores, acione o serviço de vidros pela central 0800 000 0001 (fictício); não é necessário abrir um aviso de sinistro."
+  no_coverage: "Sua apólice não possui cobertura para {event}. Seu corretor poderá orientar sobre outras opções."
+  event_type_out_of_scope: "Este canal atende avisos de sinistro do veículo. Para este assunto, entre em contato com a central."
+  # Orientação para ocorridos que não abrem aviso de sinistro
   event_type_ASSISTENCIA: "Para pane, guincho, pneu ou bateria, acione a Assistência 24h pelo 0800 000 0002 (fictício). Esse atendimento não abre um aviso de sinistro."
   event_type_NAO_SINISTRO: "Este canal é dedicado à abertura de sinistros. Para dúvidas sobre apólice, pagamentos ou cadastro, fale com seu corretor ou acesse a área do cliente."
 

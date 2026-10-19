@@ -15,6 +15,7 @@ from claims_agents.agents.triage.subagents.event_classification import (
 from claims_agents.agents.triage.subagents.parties import nodes as parties
 from claims_agents.core.llm import LLMClient
 from claims_agents.core.messages import Messages
+from claims_agents.core.settings import load_config
 from claims_agents.core.types import NodeWrapper, identity
 from claims_agents.tools.interfaces import GetCustomerData
 
@@ -26,7 +27,9 @@ def build_triage_graph(
     max_attempts: int = 3,
     wrap: NodeWrapper = identity,
     llm: LLMClient | None = None,
+    claim_types: dict[str, Any] | None = None,
 ) -> CompiledStateGraph[Any, Any, Any, Any]:
+    claim_types = claim_types if claim_types is not None else load_config("claim_types")
     g = StateGraph(TriageGraphState)
     g.add_node(
         "customer_validation",
@@ -36,7 +39,7 @@ def build_triage_graph(
         "event_classification", wrap(event_classification.build(rules, messages, max_attempts, llm))
     )
     g.add_node("parties", wrap(parties.build(rules, messages, max_attempts, llm)))
-    g.add_node("decision", wrap(decision.build(rules, messages)))
+    g.add_node("decision", wrap(decision.build(rules, messages, claim_types)))
     g.add_conditional_edges(
         START,
         coordinator.next_subagent,

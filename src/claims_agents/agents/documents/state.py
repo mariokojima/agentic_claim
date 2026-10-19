@@ -25,6 +25,7 @@ class DocumentsGraphState(BaseModel):
     protocol: str | None = None
     customer: CustomerRef | None = None
     event: dict[str, Any] = Field(default_factory=dict)
+    claim_type: str = "COLISAO"  # define o checklist (configs/documents_checklist.yaml)
     sub: DocumentsState = Field(default_factory=DocumentsState)
     # trabalho do turno
     stored: list[StoredUpload] = Field(default_factory=list)

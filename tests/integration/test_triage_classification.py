@@ -76,8 +76,6 @@ async def test_initial_message_is_reused(graph: Graph, happy_customer: Customer)
 @pytest.mark.parametrize(
     ("message", "reason", "snippet"),
     [
-        ("Roubaram meu carro ontem", "rejected:event_type_ROUBO_FURTO", "roubo ou furto"),
-        ("o para-brisa trincou na estrada", "rejected:event_type_VIDROS", "serviço de vidros"),
         (
             "meu carro não liga, preciso de guincho",
             "rejected:event_type_ASSISTENCIA",
@@ -88,14 +86,9 @@ async def test_initial_message_is_reused(graph: Graph, happy_customer: Customer)
             "rejected:event_type_NAO_SINISTRO",
             "dedicado à abertura",
         ),
-        (
-            "uma árvore caiu no carro com a chuva",
-            "rejected:event_type_FENOMENO_NATURAL",
-            "natureza",
-        ),
     ],
 )
-async def test_non_collision_is_oriented(
+async def test_non_claims_are_oriented(
     graph: Graph, happy_customer: Customer, message: str, reason: str, snippet: str
 ) -> None:
     conv = f"t-{reason}"
@@ -104,6 +97,57 @@ async def test_non_collision_is_oriented(
     r = await run_turn(graph, conv, text(message))
     assert r.state.claim_stage == ClaimStage.ORIENTADO and r.state.terminal_reason == reason
     assert snippet in replies(r) and r.state.protocol is None
+
+
+@pytest.mark.parametrize(
+    ("message", "label", "first_doc"),
+    [
+        ("Roubaram meu carro ontem às 22h na Rua Augusta, 50", "roubo ou furto", "Boletim"),
+        ("o para-brisa trincou ontem na rodovia SP-280", "vidros", "CRLV"),
+        ("ontem uma árvore caiu no carro na Rua Augusta, 50 e amassou o teto", "natureza", "CNH"),
+        ("o carro pegou fogo ontem na Av. Brasil, 200, queimou o motor", "incêndio", "CNH"),
+    ],
+)
+async def test_other_vehicle_claims_open_a_notice(
+    graph: Graph, happy_customer: Customer, message: str, label: str, first_doc: str
+) -> None:
+    """ADR-0018: roubo/furto, vidros, eventos da natureza e incêndio também abrem aviso."""
+    conv = f"t-claim-{label}"
+    await run_turn(graph, conv, text("Oi"))
+    await run_turn(graph, conv, text(happy_customer.cpf))
+    r = await run_turn(graph, conv, text(message))
+    msg = replies(r)
+    assert label in msg and "vou registrar o aviso" in msg
+    assert "outro veículo" not in msg  # envolvidos só são perguntados em colisão
+    assert r.state.claim_stage == ClaimStage.DOCUMENTOS and r.state.protocol
+    assert msg.split("clipe de anexos:")[1].strip().startswith(f"• {first_doc}")
+
+
+async def test_theft_without_coverage_is_oriented(graph: Graph, fixtures: Any) -> None:
+    karina = next(c for c in fixtures[0] if c.name.startswith("Karina"))  # só COLISAO/TERCEIROS
+    await run_turn(graph, "t-nocov", text("Oi"))
+    await run_turn(graph, "t-nocov", text(karina.cpf))
+    r = await run_turn(graph, "t-nocov", text("Roubaram meu carro ontem"))
+    assert r.state.terminal_reason == "rejected:no_coverage"
+    assert "cobertura para roubo ou furto" in replies(r)
+
+
+async def test_theft_requires_police_report_cnh_and_crlv_without_photos(
+    graph: Graph, happy_customer: Customer, tmp_path: Any
+) -> None:
+    from claims_agents.domain import DocumentType
+    from tests.support.conversation import attachment
+
+    await run_turn(graph, "t-theft", text("Oi"))
+    await run_turn(graph, "t-theft", text(happy_customer.cpf))
+    await run_turn(graph, "t-theft", text("Roubaram meu carro ontem às 22h na Rua Augusta, 50"))
+    docs = [
+        attachment(tmp_path, DocumentType.BOLETIM_OCORRENCIA, {}),
+        attachment(tmp_path, DocumentType.CNH, {"cpf": happy_customer.cpf}),
+        attachment(tmp_path, DocumentType.CRLV, {"plate": "SNT1A23"}),
+    ]
+    r = await run_turn(graph, "t-theft", text("docs", docs))
+    assert r.state.claim_stage == ClaimStage.CONCLUIDO and "Fotos" not in replies(r)
 
 
 async def test_unclear_event_escalates_after_attempts(

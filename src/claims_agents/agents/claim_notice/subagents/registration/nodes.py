@@ -36,7 +36,10 @@ def build(open_claim: OpenClaim, messages: Messages) -> NodeFn[NoticeGraphState]
         try:
             resp = await open_claim(
                 OpenClaimRequest(
-                    customer_id=customer.id, policy_number=customer.policy_number, event=event
+                    customer_id=customer.id,
+                    policy_number=customer.policy_number,
+                    event=event,
+                    claim_type=state.claim_type,
                 )
             )
         except ToolError as exc:
@@ -66,7 +69,7 @@ def build(open_claim: OpenClaim, messages: Messages) -> NodeFn[NoticeGraphState]
                     protocol=resp.protocol,
                     when=describe_when(sub.event),
                     location=event.location,
-                    damages=event.damages or "não informados",
+                    damages=f" Danos: {event.damages}." if event.damages else "",
                 )
                 + "\n"
                 + _coverage_line(sub.event.get("coverage") or {}, messages),

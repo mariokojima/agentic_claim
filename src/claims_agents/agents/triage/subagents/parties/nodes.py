@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from claims_agents.agents.triage.completion import triage_completed
 from claims_agents.agents.triage.state import TriageGraphState
 from claims_agents.agents.triage.subagents.parties.detector import PartiesDetector
 from claims_agents.agents.triage.subagents.parties.schemas import PartiesExtraction
@@ -77,30 +78,9 @@ def build(
             details=f"Terceiros: {_yn(known['third_parties'])}; feridos: {_yn(known['injuries'])}",
             data={"has_third_parties": known["third_parties"], "has_injuries": known["injuries"]},
         )
-        return {"sub": sub, "result": _completed(sub.outcome, messages)}
+        return {"sub": sub, "result": triage_completed(sub.outcome, messages)}
 
     return parties
-
-
-def _completed(outcome: dict[str, Any], messages: Messages) -> StageResult:
-    """Triagem concluída: segurado elegível, ocorrido entendido e envolvidos identificados."""
-    decision = outcome.get("decision", {})
-    keys = ("event_type", "event_description", "event_date", "has_third_parties", "has_injuries")
-    urgent = bool(outcome.get("has_injuries"))
-    return StageResult(
-        status="completed",
-        reason="Segurado identificado, elegível e ocorrido entendido",
-        payload=decision
-        | {k: outcome.get(k) for k in keys}
-        | {"urgency": "alta" if urgent else "normal"},
-        user_message=(messages.get("triage.urgent") + "\n\n" if urgent else "")
-        + messages.get(
-            "triage.identified",
-            event=outcome.get("event_label", "colisão"),
-            policy=decision.get("policy_number"),
-            plate=decision.get("vehicle_plate"),
-        ),
-    )
 
 
 def _merged(known: dict[str, bool | None], found: PartiesExtraction) -> dict[str, bool | None]:

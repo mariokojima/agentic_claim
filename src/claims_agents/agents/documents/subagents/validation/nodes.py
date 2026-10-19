@@ -25,6 +25,7 @@ def build(validate_document: ValidateDocument, messages: Messages) -> NodeFn[Doc
         event_date = state.event.get("event_date")
         ctx = ValidationContext(
             protocol=state.protocol,
+            claim_type=state.claim_type,
             customer_cpf=state.customer.cpf if state.customer else None,
             vehicle_plate=state.customer.vehicle_plate if state.customer else None,
             event_date=date.fromisoformat(event_date) if event_date else None,

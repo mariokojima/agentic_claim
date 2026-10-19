@@ -45,9 +45,8 @@ def event_summary(event: dict[str, Any]) -> str:
 
 
 def build(messages: Messages, checklist: dict[str, Any]) -> NodeFn[DocumentsGraphState]:
-    labels = doc_labels(checklist)
-
     def complement(state: DocumentsGraphState) -> dict[str, Any]:
+        labels = doc_labels(checklist, state.claim_type)
         sub = state.sub.model_copy(deep=True)
         missing_type = messages.get("documents.missing_type")
         problems = [f"• {d.filename}: {'; '.join(d.issues)}" for d in state.batch if not d.valid]

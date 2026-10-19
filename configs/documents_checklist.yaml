@@ -1,6 +1,8 @@
-# Checklist de documentos por tipo de sinistro (ADR-0009) e regras de validação (ADR-0007).
-COLISAO:
-  - doc_type: CNH
+# Checklist de documentos por tipo de sinistro (ADR-0009, ADR-0018) e regras de validação
+# (ADR-0007). As chaves são os tipos de configs/claim_types.yaml. [CONFIRMAR com o autor]
+_documents:
+  cnh: &cnh
+    doc_type: CNH
     label: "CNH do condutor"
     required: true
     min_count: 1
@@ -9,7 +11,8 @@ COLISAO:
     min_size_bytes: 1024
     required_metadata: [cpf]
     consistency: {cpf: customer_cpf}
-  - doc_type: CRLV
+  crlv: &crlv
+    doc_type: CRLV
     label: "CRLV do veículo"
     required: true
     min_count: 1
@@ -18,7 +21,8 @@ COLISAO:
     min_size_bytes: 1024
     required_metadata: [plate]
     consistency: {plate: vehicle_plate}
-  - doc_type: FOTO_DANO
+  photos: &photos
+    doc_type: FOTO_DANO
     label: "Fotos dos danos"
     required: true
     min_count: 3
@@ -27,12 +31,42 @@ COLISAO:
     min_size_bytes: 1024
     required_metadata: [captured_at]
     consistency: {captured_at: not_before_event_date}
-  - doc_type: BOLETIM_OCORRENCIA
+  police_report: &police_report
+    doc_type: BOLETIM_OCORRENCIA
     label: "Boletim de ocorrência"
-    required: conditional
-    required_if_any: [has_third_parties, has_injuries]
+    required: true
     min_count: 1
     mime_types: [application/pdf, image/jpeg, image/png]
     max_size_bytes: 10485760
     min_size_bytes: 1024
     required_metadata: []
+
+COLISAO:
+  - *cnh
+  - *crlv
+  - *photos
+  - <<: *police_report
+    required: conditional
+    required_if_any: [has_third_parties, has_injuries]
+
+ROUBO_FURTO:          # o veículo não está disponível: sem fotos; BO obrigatório
+  - *police_report
+  - *cnh
+  - *crlv
+
+INCENDIO:
+  - *cnh
+  - *crlv
+  - *photos
+  - *police_report
+
+FENOMENO_NATURAL:
+  - *cnh
+  - *crlv
+  - *photos
+
+VIDROS:
+  - *crlv
+  - <<: *photos
+    label: "Fotos do vidro danificado"
+    min_count: 1

@@ -1,0 +1,34 @@
+# Tipos de sinistro de veículo aceitos pelo canal (ADR-0018). Cada tipo define a cobertura
+# exigida na apólice, se a Triagem pergunta envolvidos/feridos e os dados coletados no Aviso.
+# Documentos exigidos por tipo: configs/documents_checklist.yaml (mesma chave).
+# Tipos não listados aqui (ex.: ASSISTENCIA, NAO_SINISTRO) são orientados, sem abrir aviso.
+COLISAO:
+  label: "colisão (acidente de trânsito)"
+  short: "colisão"
+  coverage: COLISAO
+  parties: true
+  notice_fields: [when, where, what, damages]
+ROUBO_FURTO:
+  label: "roubo ou furto do veículo"
+  short: "roubo/furto"
+  coverage: ROUBO_FURTO
+  parties: false
+  notice_fields: [when, where, what]
+INCENDIO:
+  label: "incêndio no veículo"
+  short: "incêndio"
+  coverage: INCENDIO
+  parties: false
+  notice_fields: [when, where, what, damages]
+FENOMENO_NATURAL:
+  label: "dano por evento da natureza (alagamento, granizo, queda de árvore)"
+  short: "evento da natureza"
+  coverage: COLISAO          # casco/compreensiva cobre fenômenos naturais [CONFIRMAR]
+  parties: false
+  notice_fields: [when, where, what, damages]
+VIDROS:
+  label: "dano em vidros, faróis ou retrovisores"
+  short: "dano em vidros"
+  coverage: VIDROS
+  parties: false
+  notice_fields: [when, where, damages]

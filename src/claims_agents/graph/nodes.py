@@ -70,7 +70,13 @@ class MainNodes:
         wrap = demo_wrapper(deps.settings.demo.subagent_delay_ms)
         llm = deps.llm if deps.settings.triage.llm_fallback else None
         self.triage_graph = build_triage_graph(
-            reg.get_customer_data, deps.triage_rules, msgs, attempts, wrap, llm=llm
+            reg.get_customer_data,
+            deps.triage_rules,
+            msgs,
+            attempts,
+            wrap,
+            llm=llm,
+            claim_types=deps.claim_types,
         )
         self.notice_graph = build_claim_notice_graph(
             reg.open_claim, msgs, attempts, wrap, llm=deps.llm
@@ -449,7 +455,11 @@ class MainNodes:
                     k: bool(state.triage.outcome.get(k))
                     for k in ("has_third_parties", "has_injuries")
                 },
-                known_what="colisão" if state.triage.outcome.get("event_type") == "COLISAO" else "",
+                known_what=self._claim_type_field(state, "short") or "",
+                claim_type=self._claim_type(state),
+                required_coverage=self._claim_type_field(state, "coverage") or "COLISAO",
+                fields=list(self._claim_type_field(state, "notice_fields") or [])
+                or ["when", "where", "what", "damages"],
                 coverages=self._policy_coverages(state),
                 customer=state.customer,
                 sub=state.notice,
@@ -462,6 +472,13 @@ class MainNodes:
         return updates
 
     @staticmethod
+    def _claim_type(state: GlobalState) -> str:
+        return str(state.triage.outcome.get("event_type") or "COLISAO")
+
+    def _claim_type_field(self, state: GlobalState, key: str) -> Any:
+        return self.deps.claim_types.get(self._claim_type(state), {}).get(key)
+
+    @staticmethod
     def _policy_coverages(state: GlobalState) -> list[str]:
         number = state.customer.policy_number if state.customer else None
         for policy in state.triage.outcome.get("policies", []):
@@ -472,6 +489,7 @@ class MainNodes:
     async def documents(self, state: GlobalState) -> dict[str, Any]:
         out = await self.documents_graph.ainvoke(
             DocumentsGraphState(
+                claim_type=self._claim_type(state),
                 attachments=state.inbound.attachments if state.inbound else [],
                 protocol=state.protocol,
                 customer=state.customer,

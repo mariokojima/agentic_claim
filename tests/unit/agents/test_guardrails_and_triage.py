@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Any
 
 from claims_agents.agents.guardrails.aggregator import aggregate
 from claims_agents.agents.guardrails.graph import build_guardrails_graph
@@ -67,13 +68,23 @@ def _policy(**over: object) -> dict[str, object]:
 
 
 def test_decision_rules() -> None:
-    rules = load_config("triage_rules")
+    rules, types = load_config("triage_rules"), load_config("claim_types")
     day = date(2026, 6, 1)
-    assert decide([_policy()], rules, day).eligible
-    assert decide([], rules, day).reason == "customer_not_found"
-    assert decide([_policy(status="VENCIDA")], rules, day).reason == "policy_not_active"
-    assert decide([_policy(coverages=["VIDROS"])], rules, day).reason == "no_coverage"
-    assert decide([_policy()], rules, date(2027, 6, 1)).reason == "outside_policy_term"
+
+    def run(policies: list[dict[str, object]], when: date = day, kind: str = "COLISAO") -> Any:
+        return decide(policies, rules, when, kind, types)
+
+    assert run([_policy()]).eligible
+    assert run([]).reason == "customer_not_found"
+    assert run([_policy(status="VENCIDA")]).reason == "policy_not_active"
+    assert run([_policy(coverages=["VIDROS"])]).reason == "no_coverage"
+    assert run([_policy()], date(2027, 6, 1)).reason == "outside_policy_term"
     # escolhe a apólice elegível entre várias
     mixed = [_policy(number="OLD", status="VENCIDA"), _policy(number="NEW")]
-    assert decide(mixed, rules, day).policy_number == "NEW"
+    assert run(mixed).policy_number == "NEW"
+    # cobertura exigida depende do tipo (ADR-0018)
+    assert run([_policy(coverages=["ROUBO_FURTO"])], kind="ROUBO_FURTO").eligible
+    assert run([_policy()], kind="ROUBO_FURTO").reason == "no_coverage"
+    assert run([_policy(coverages=["VIDROS"])], kind="VIDROS").eligible
+    assert run([_policy()], kind="FENOMENO_NATURAL").eligible  # casco cobre natureza
+    assert run([_policy()], kind="ASSISTENCIA").reason == "event_type_ASSISTENCIA"

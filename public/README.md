@@ -9,6 +9,7 @@ No chat, anexe com o tipo "Detectar pelo nome do arquivo" para enviar todos de u
 |---|---|---|---|
 | `60000881325` | Ana Beatriz Sintética | AUTO-0001-01 | SNT1A23 |
 | `60238831922` | Bruno Carvalho Teste | AUTO-0002-01 | TST2B34 |
+| `99791411662` | Diego Esteves Mock | AUTO-0004-01 | MCK4D56 |
 | `26598267145` | Fabio Gomes Simulado | AUTO-0006-02 | SIM6F78 |
 | `19810523211` | João Lima Ficticio | AUTO-0010-01 | FIC9J01 |
 | `47740236047` | Karina Moura Mock | AUTO-0011-01 | MCK1K23 |

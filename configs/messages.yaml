@@ -20,7 +20,7 @@ notice:
   missing_what: "• o que aconteceu (ex.: bati na traseira de outro carro, fui atingido no cruzamento)"
   missing_damages: "• quais partes do veículo foram danificadas (ex.: para-choque traseiro, porta do motorista)"
   future_date: "A data informada ({date}) está no futuro. Pode confirmar quando o acidente aconteceu?"
-  registered: "Aviso registrado com sucesso! Seu protocolo é {protocol}.\nResumo: {when} — {location}. Danos: {damages}."
+  registered: "Aviso registrado com sucesso! Seu protocolo é {protocol}.\nResumo: {when} — {location}.{damages}"
   coverage: "Avaliação preliminar: o evento está entre as coberturas da sua apólice{third_party}. A confirmação depende da análise da equipe."
   third_party_included: "; a apólice inclui cobertura para danos a terceiros"
   third_party_not_included: "; a apólice não inclui cobertura para danos a terceiros"

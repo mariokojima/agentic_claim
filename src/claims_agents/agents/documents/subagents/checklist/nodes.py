@@ -45,14 +45,12 @@ def pending_items(requirements: dict[str, Any], received: list[ReceivedDocument]
     return items
 
 
-def build(
-    checklist: dict[str, Any], messages: Messages, claim_type: str = "COLISAO"
-) -> NodeFn[DocumentsGraphState]:
+def build(checklist: dict[str, Any], messages: Messages) -> NodeFn[DocumentsGraphState]:
     def checklist_node(state: DocumentsGraphState) -> dict[str, Any]:
         sub = state.sub.model_copy(deep=True)
         if sub.step != "start":
             return {}
-        reqs = requirements_for(checklist, claim_type, state.event)
+        reqs = requirements_for(checklist, state.claim_type, state.event)
         sub.requirements = {r.doc_type: r.model_dump() for r in reqs}
         sub.step = "await_documents"
         emit(

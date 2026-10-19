@@ -1,7 +1,7 @@
 """Gera imagens de documentos SINTÉTICOS para simular o envio de documentos no chat.
 
-Saída: public/<cpf>/ para cada cliente sintético elegível ao caminho feliz (mesma regra da
-Triagem), com CNH, CRLV, 3 fotos de dano e boletim de ocorrência; e public/_invalidos/ com
+Saída: public/<cpf>/ para cada cliente sintético com apólice válida para algum tipo de sinistro
+(mesma regra da Triagem), com CNH, CRLV, 3 fotos de dano e boletim de ocorrência; e public/_invalidos/ com
 arquivos para testar a complementação. Determinístico (semente por CPF).
 
 Todas as imagens levam marca d'água "DOCUMENTO SINTÉTICO — SEM VALOR LEGAL" e NÃO reproduzem
@@ -282,8 +282,12 @@ def eligible_policy(
         }
         for p in own
     ]
-    decision = decide(views, rules, date.today())
-    return next((p for p in own if p.number == decision.policy_number), None)
+    claim_types = load_config("claim_types")
+    for event_type in claim_types:  # elegível para qualquer tipo de sinistro (ADR-0018)
+        decision = decide(views, rules, date.today(), event_type, claim_types)
+        if decision.eligible:
+            return next((p for p in own if p.number == decision.policy_number), None)
+    return None
 
 
 def save(img: Image.Image, path: Path) -> None:

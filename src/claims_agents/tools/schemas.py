@@ -78,6 +78,7 @@ class OpenClaimRequest(_Schema):
     customer_id: str
     policy_number: str
     event: ClaimEventData
+    claim_type: str = "COLISAO"
 
 
 class OpenClaimResponse(_Schema):

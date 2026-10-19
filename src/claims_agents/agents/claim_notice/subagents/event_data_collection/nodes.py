@@ -62,9 +62,11 @@ def build(
     today: Callable[[], date] = date.today,
     llm: LLMClient | None = None,
 ) -> NodeFn[NoticeGraphState]:
-    async def llm_fill(text: str, ext: EventExtraction, event: dict[str, Any]) -> EventExtraction:
+    async def llm_fill(
+        text: str, ext: EventExtraction, event: dict[str, Any], fields: list[str]
+    ) -> EventExtraction:
         """Completa com o LLM apenas os campos que as regras não acharam."""
-        missing = [f for f in FIELDS if not event.get(KEYS[f]) and not _ext_has(ext, f)]
+        missing = [f for f in fields if not event.get(KEYS[f]) and not _ext_has(ext, f)]
         if llm is None or not missing or len(text.split()) < MIN_WORDS_FOR_LLM:
             return ext
         prompt = load_prompt("claim_notice/event_extraction")
@@ -110,7 +112,8 @@ def build(
         else:
             text = state.text.strip()
         event = dict(sub.event)
-        ext = await llm_fill(text, extract_event(text, today()), event)
+        fields = [f for f in state.fields if f in FIELDS] or list(FIELDS)
+        ext = await llm_fill(text, extract_event(text, today()), event, fields)
         before = {f: _has(event, f) for f in FIELDS}
         if ext.event_date and not before["when"]:
             event["event_date"] = ext.event_date.isoformat()
@@ -129,7 +132,7 @@ def build(
         sub.event = event
 
         found = [f for f in FIELDS if _has(event, f) and not before[f]]
-        missing = [f for f in FIELDS if not _has(event, f)]
+        missing = [f for f in fields if not _has(event, f)]
         emit(
             "field_extracted" if found else "field_invalid",
             subagent=NAME,
@@ -169,11 +172,11 @@ def build(
             event_time=event.get("event_time"),
             location=event["location"],
             description=event["description"],
-            damages=event["damages"],
+            damages=event.get("damages") or "",
             has_third_parties=state.parties.get("has_third_parties", False),
             has_injuries=state.parties.get("has_injuries", False),
         )
-        sub.event = draft.model_dump() | {"what": event["what"]}
+        sub.event = draft.model_dump() | {"what": event.get("what") or state.known_what}
         sub.step = "assess"
         return {"sub": sub}
 

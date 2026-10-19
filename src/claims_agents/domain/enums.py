@@ -30,7 +30,13 @@ TERMINAL_STAGES = frozenset(
 
 
 class ClaimType(StrEnum):
+    """Tipos de sinistro de veículo aceitos (configs/claim_types.yaml, ADR-0018)."""
+
     COLISAO = "COLISAO"
+    ROUBO_FURTO = "ROUBO_FURTO"
+    INCENDIO = "INCENDIO"
+    FENOMENO_NATURAL = "FENOMENO_NATURAL"
+    VIDROS = "VIDROS"
 
 
 class PolicyStatus(StrEnum):
