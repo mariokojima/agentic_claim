@@ -53,6 +53,16 @@ WHAT_RE = re.compile(
 )
 
 
+DAMAGE_RE = re.compile(
+    r"(?i)\b(portas?(\s+(dianteira|traseira|do\s+motorista|do\s+passageiro)s?)?|"
+    r"para-?choques?(\s+(dianteiro|traseiro)s?)?|far[oó]is|farol|lanternas?|cap[oô]|"
+    r"para-?lamas?|para-?brisas?|retrovisor(es)?|espelho|teto|rodas?|pneus?|vidros?|"
+    r"porta-?malas|tampa\s+traseira|grade|radiador|suspens[aã]o|motor|"
+    r"lateral(\s+(esquerda|direita))?|traseira|dianteira|frente)\b"
+)
+NO_DAMAGE_RE = re.compile(r"(?i)\b(sem\s+danos?|nenhum\s+dano|n[aã]o\s+(houve|teve)\s+danos?)\b")
+
+
 class EventExtraction(BaseModel):
     event_date: date | None = None
     event_time: time | None = None
@@ -60,6 +70,7 @@ class EventExtraction(BaseModel):
     future_date: bool = False
     location: str | None = None
     what: str | None = None
+    damages: str | None = None
 
 
 def extract_when(text: str, today: date) -> tuple[date | None, str | None, bool]:
@@ -120,6 +131,18 @@ def extract_what(text: str) -> str | None:
     return m.group(0).lower() if m else None
 
 
+def extract_damages(text: str) -> str | None:
+    """Partes danificadas citadas (ex.: "para-choque traseiro, lanterna")."""
+    if NO_DAMAGE_RE.search(text):
+        return "sem danos aparentes"
+    parts: list[str] = []
+    for m in DAMAGE_RE.finditer(text):
+        part = re.sub(r"\s+", " ", m.group(0).lower())
+        if not any(part in p or p in part for p in parts):
+            parts.append(part)
+    return ", ".join(parts) or None
+
+
 def extract_event(text: str, today: date) -> EventExtraction:
     event_date, when_text, future = extract_when(text, today)
     return EventExtraction(
@@ -129,4 +152,5 @@ def extract_event(text: str, today: date) -> EventExtraction:
         future_date=future,
         location=extract_where(text),
         what=extract_what(text),
+        damages=extract_damages(text),
     )

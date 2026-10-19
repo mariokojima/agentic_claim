@@ -75,34 +75,38 @@ def test_future_date_is_flagged() -> None:
     assert e.future_date and e.event_date is None
 
 
-def _run(texts: list[str]) -> list[dict]:  # type: ignore[type-arg]
+async def _run(texts: list[str]) -> list[dict]:  # type: ignore[type-arg]
     node = nodes.build(load_messages(), max_attempts=3, today=lambda: TODAY)
     state = NoticeGraphState(sub=NoticeState(step="await_description"))
     outs = []
     for t in texts:
-        out = node(NoticeGraphState(text=t, sub=state.sub))
+        out = await node(NoticeGraphState(text=t, sub=state.sub))
         state = NoticeGraphState(sub=out["sub"])
         outs.append(out)
     return outs
 
 
-def test_asks_only_for_missing_and_accumulates() -> None:
-    first, second, third = _run(["Bati o carro", "foi ontem", "na Av. Paulista, 1000"])
+async def test_asks_only_for_missing_and_accumulates() -> None:
+    first, second, third, fourth = await _run(
+        ["Bati o carro", "foi ontem", "na Av. Paulista, 1000", "amassou o para-choque"]
+    )
     msg1 = first["result"].user_message
     assert "quando aconteceu" in msg1 and "onde aconteceu" in msg1 and "o que aconteceu" not in msg1
     msg2 = second["result"].user_message
     assert "onde aconteceu" in msg2 and "quando aconteceu" not in msg2 and "Já anotei" in msg2
-    assert "result" not in third  # completo: segue para a avaliação de cobertura
-    assert third["sub"].step == "assess"
-    assert third["sub"].event["location"] == "Av Paulista, 1000"
-    assert third["sub"].event["event_date"] == "2026-10-12"
+    assert "quais partes do veículo" in third["result"].user_message
+    assert "result" not in fourth  # completo: segue para a avaliação de cobertura
+    assert fourth["sub"].step == "assess"
+    assert fourth["sub"].event["location"] == "Av Paulista, 1000"
+    assert fourth["sub"].event["event_date"] == "2026-10-12"
+    assert fourth["sub"].event["damages"] == "para-choque"
 
 
-def test_no_progress_counts_attempts_until_failure() -> None:
-    outs = _run(["oi", "não sei", "hmm"])
+async def test_no_progress_counts_attempts_until_failure() -> None:
+    outs = await _run(["oi", "não sei", "hmm"])
     assert [o["result"].status for o in outs] == ["needs_input", "needs_input", "failed"]
 
 
-def test_future_date_asks_for_confirmation() -> None:
-    (out,) = _run(["bati na Av. Paulista em 20/10"])
+async def test_future_date_asks_for_confirmation() -> None:
+    (out,) = await _run(["bati na Av. Paulista em 20/10"])
     assert "está no futuro" in out["result"].user_message

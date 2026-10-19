@@ -66,8 +66,21 @@ def build(open_claim: OpenClaim, messages: Messages) -> NodeFn[NoticeGraphState]
                     protocol=resp.protocol,
                     when=describe_when(sub.event),
                     location=event.location,
-                ),
+                    damages=event.damages or "não informados",
+                )
+                + "\n"
+                + _coverage_line(sub.event.get("coverage") or {}, messages),
             ),
         }
 
     return registration
+
+
+def _coverage_line(coverage: dict[str, Any], messages: Messages) -> str:
+    third = coverage.get("third_party_coverage")
+    extra = (
+        ""
+        if third is None
+        else messages.get("notice.third_party_" + ("included" if third else "not_included"))
+    )
+    return messages.get("notice.coverage", third_party=extra)

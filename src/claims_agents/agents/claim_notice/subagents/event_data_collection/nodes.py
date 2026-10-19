@@ -1,27 +1,52 @@
-"""Subagente de coleta dos dados do evento: exige quando, onde e o que aconteceu.
+"""Subagente de coleta dos dados do evento: quando, onde, o que aconteceu e danos.
 
 As informações são acumuladas entre mensagens; o cliente só é perguntado pelo que falta.
+Regras primeiro; o LLM (prompt versionado) entra quando as regras deixam lacunas.
+Envolvidos já vêm da Triagem.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
-from datetime import date
+from datetime import date, datetime, time
 from typing import Any
+
+from pydantic import BaseModel
 
 from claims_agents.agents.claim_notice.state import NoticeGraphState
 from claims_agents.agents.claim_notice.subagents.event_data_collection.schemas import EventDraft
-from claims_agents.agents.shared.event_extraction import (
-    extract_event,
-)
+from claims_agents.agents.shared.event_extraction import EventExtraction, extract_event
+from claims_agents.core.llm import LLMClient, LLMError
 from claims_agents.core.messages import Messages
+from claims_agents.core.prompts import load_prompt
 from claims_agents.core.types import NodeFn
 from claims_agents.observability.emit import emit
 from claims_agents.state import StageResult
 
 NAME = "event_data_collection"
-FIELDS = ("when", "where", "what")
-FIELD_LABELS = {"when": "quando", "where": "onde", "what": "o que"}
+FIELDS = ("when", "where", "what", "damages")
+FIELD_LABELS = {"when": "quando", "where": "onde", "what": "o que", "damages": "danos"}
+KEYS = {"when": "event_date", "where": "location", "what": "what", "damages": "damages"}
+WEEKDAYS = [
+    "segunda-feira",
+    "terça-feira",
+    "quarta-feira",
+    "quinta-feira",
+    "sexta-feira",
+    "sábado",
+    "domingo",
+]
+MIN_WORDS_FOR_LLM = 4
+
+
+class LLMEventData(BaseModel):
+    """Saída estruturada pedida ao LLM (prompts/claim_notice/event_extraction.md)."""
+
+    event_date: str | None
+    event_time: str | None
+    location: str | None
+    what: str | None
+    damages: str | None
 
 
 def describe_when(event: dict[str, Any]) -> str:
@@ -32,29 +57,60 @@ def describe_when(event: dict[str, Any]) -> str:
 
 
 def build(
-    messages: Messages, max_attempts: int, today: Callable[[], date] = date.today
+    messages: Messages,
+    max_attempts: int,
+    today: Callable[[], date] = date.today,
+    llm: LLMClient | None = None,
 ) -> NodeFn[NoticeGraphState]:
-    def event_data_collection(state: NoticeGraphState) -> dict[str, Any]:
+    async def llm_fill(text: str, ext: EventExtraction, event: dict[str, Any]) -> EventExtraction:
+        """Completa com o LLM apenas os campos que as regras não acharam."""
+        missing = [f for f in FIELDS if not event.get(KEYS[f]) and not _ext_has(ext, f)]
+        if llm is None or not missing or len(text.split()) < MIN_WORDS_FOR_LLM:
+            return ext
+        prompt = load_prompt("claim_notice/event_extraction")
+        day = today()
+        system = prompt.render(today=day.isoformat(), weekday=WEEKDAYS[day.weekday()])
+        try:
+            resp = await llm.chat(
+                [{"role": "system", "content": system}, {"role": "user", "content": text}],
+                role="extraction",
+                response_model=LLMEventData,
+                prompt_version=prompt.ref,
+            )
+        except LLMError:
+            return ext
+        out = LLMEventData.model_validate(resp.parsed)
+        update: dict[str, Any] = {}
+        parsed_date = _parse_date(out.event_date)
+        if not ext.event_date and parsed_date and parsed_date <= day:
+            update["event_date"] = parsed_date
+        if not ext.event_time and (parsed_time := _parse_time(out.event_time)):
+            update["event_time"] = parsed_time
+        for field in ("location", "what", "damages"):
+            if not getattr(ext, field) and getattr(out, field):
+                update[field] = str(getattr(out, field))[:120]
+        if update:
+            emit(
+                "llm_extraction",
+                subagent=NAME,
+                details=", ".join(sorted(update)),
+                data={"fields": sorted(update)},
+            )
+        return ext.model_copy(update=update)
+
+    async def event_data_collection(state: NoticeGraphState) -> dict[str, Any]:
         sub = state.sub.model_copy(deep=True)
         first_pass = sub.step == "start"
         if first_pass:
             sub.step = "await_description"
             if not state.prior_text.strip():
-                return {
-                    "sub": sub,
-                    "awaiting_field": "description",
-                    "result": StageResult(
-                        status="needs_input",
-                        reason="Descrição do evento solicitada",
-                        user_message=messages.get("notice.ask_description"),
-                    ),
-                }
+                return _ask(sub, messages.get("notice.ask_description"), "Descrição solicitada")
             # reaproveita o relato da Triagem: só pergunta o que faltar
             text = state.prior_text.strip()
         else:
             text = state.text.strip()
-        ext = extract_event(text, today())
         event = dict(sub.event)
+        ext = await llm_fill(text, extract_event(text, today()), event)
         before = {f: _has(event, f) for f in FIELDS}
         if ext.event_date and not before["when"]:
             event["event_date"] = ext.event_date.isoformat()
@@ -66,6 +122,8 @@ def build(
             event["what"] = ext.what
         elif first_pass and not before["what"] and state.known_what:
             event["what"] = state.known_what  # a Triagem já entendeu o ocorrido
+        if ext.damages and not before["damages"]:
+            event["damages"] = ext.damages
         if text:
             event["description"] = f"{event.get('description', '')} {text}".strip()
         sub.event = event
@@ -111,6 +169,7 @@ def build(
             event_time=event.get("event_time"),
             location=event["location"],
             description=event["description"],
+            damages=event["damages"],
             has_third_parties=state.parties.get("has_third_parties", False),
             has_injuries=state.parties.get("has_injuries", False),
         )
@@ -122,8 +181,25 @@ def build(
 
 
 def _has(event: dict[str, Any], field: str) -> bool:
-    key = {"when": "event_date", "where": "location", "what": "what"}[field]
-    return bool(event.get(key))
+    return bool(event.get(KEYS[field]))
+
+
+def _ext_has(ext: EventExtraction, field: str) -> bool:
+    return bool(getattr(ext, {"when": "event_date", "where": "location"}.get(field, field)))
+
+
+def _parse_date(value: str | None) -> date | None:
+    try:
+        return date.fromisoformat(value) if value else None
+    except ValueError:
+        return None
+
+
+def _parse_time(value: str | None) -> time | None:
+    try:
+        return datetime.strptime(value, "%H:%M").time() if value else None
+    except ValueError:
+        return None
 
 
 def _understood(event: dict[str, Any]) -> str:
@@ -134,6 +210,8 @@ def _understood(event: dict[str, Any]) -> str:
         parts.append(f"onde: {event['location']}")
     if _has(event, "what"):
         parts.append(f"o que: {event['what']}")
+    if _has(event, "damages"):
+        parts.append(f"danos: {event['damages']}")
     return "; ".join(parts)
 
 

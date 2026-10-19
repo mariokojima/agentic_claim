@@ -6,5 +6,6 @@ class EventDraft(BaseModel):
     event_time: str | None = None
     location: str
     description: str
+    damages: str = ""
     has_injuries: bool = False
     has_third_parties: bool = False

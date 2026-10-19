@@ -15,6 +15,7 @@ from claims_agents.agents.claim_notice.subagents.event_data_collection import (
     nodes as event_data_collection,
 )
 from claims_agents.agents.claim_notice.subagents.registration import nodes as registration
+from claims_agents.core.llm import LLMClient
 from claims_agents.core.messages import Messages
 from claims_agents.core.types import NodeWrapper, identity
 from claims_agents.tools.interfaces import OpenClaim
@@ -27,9 +28,13 @@ def build_claim_notice_graph(
     messages: Messages,
     max_attempts: int = 3,
     wrap: NodeWrapper = identity,
+    llm: LLMClient | None = None,
 ) -> CompiledStateGraph[Any, Any, Any, Any]:
     g = StateGraph(NoticeGraphState)
-    g.add_node("event_data_collection", wrap(event_data_collection.build(messages, max_attempts)))
+    g.add_node(
+        "event_data_collection",
+        wrap(event_data_collection.build(messages, max_attempts, llm=llm)),
+    )
     g.add_node("coverage_assessment", wrap(coverage_assessment))
     g.add_node("registration", wrap(registration.build(open_claim, messages)))
     routes: dict[Hashable, str] = {name: name for name in SUBAGENTS}
