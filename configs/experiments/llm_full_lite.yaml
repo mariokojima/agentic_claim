@@ -1,0 +1,10 @@
+name: llm_full_lite
+title: LLM completo (modelo lite)
+description: Igual ao llm_full, usando apenas o gemini-flash-lite-latest (comparação de modelos).
+llm: true
+settings:
+  orchestrator: {intent_llm_enabled: true}
+guardrails:
+  llm_classifier: {enabled: true}
+models:
+  default: {model: gemini-flash-lite-latest, fallback_models: []}

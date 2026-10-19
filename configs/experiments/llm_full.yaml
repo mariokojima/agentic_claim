@@ -1,0 +1,8 @@
+name: llm_full
+title: LLM completo
+description: Fallbacks, intenção e classificador LLM nos guardrails de entrada.
+llm: true
+settings:
+  orchestrator: {intent_llm_enabled: true}
+guardrails:
+  llm_classifier: {enabled: true}

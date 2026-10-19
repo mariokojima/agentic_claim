@@ -1,0 +1,6 @@
+name: llm_routing
+title: + LLM no roteamento
+description: Fallbacks de extração e classificação de intenção por LLM no Orquestrador.
+llm: true
+settings:
+  orchestrator: {intent_llm_enabled: true}

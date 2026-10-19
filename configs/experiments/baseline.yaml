@@ -1,0 +1,7 @@
+name: baseline
+title: Só regras
+description: Sem LLM em nenhum ponto; guardrails, intenções e extrações determinísticos.
+llm: false
+settings:
+  llm: {enabled: false}
+  orchestrator: {intent_llm_enabled: false}

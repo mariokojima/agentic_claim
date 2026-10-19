@@ -1,0 +1,6 @@
+name: llm_fallback
+title: Regras + LLM nas extrações
+description: Configuração padrão da aplicação — LLM como fallback na Triagem e no Aviso.
+llm: true
+settings:
+  orchestrator: {intent_llm_enabled: false}

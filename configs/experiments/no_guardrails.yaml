@@ -1,0 +1,8 @@
+name: no_guardrails
+title: Sem guardrails
+description: Como o baseline, mas com todos os guardrails desligados (mede o que eles evitam).
+llm: false
+settings:
+  llm: {enabled: false}
+guardrails:
+  enabled: false

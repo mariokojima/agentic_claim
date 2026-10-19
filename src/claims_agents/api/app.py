@@ -28,25 +28,11 @@ from claims_agents.core.llm import build_llm_client, load_llm_config
 from claims_agents.core.logging import configure_logging, get_logger
 from claims_agents.core.settings import PROJECT_ROOT, Settings, get_settings
 from claims_agents.domain import DocumentType
-from claims_agents.graph.build_graph import build_graph
-from claims_agents.graph.checkpointer import open_checkpointer
-from claims_agents.graph.control import PauseControl
-from claims_agents.graph.deps import GraphDeps
-from claims_agents.observability.bus import EventBus
-from claims_agents.observability.emit import tool_observer
-from claims_agents.observability.store import EventStore
+from claims_agents.runtime import open_runtime
 from claims_agents.state import GlobalState
-from claims_agents.tools.mocks.db import DomainDB, load_fixtures
-from claims_agents.tools.registry import build_registry
+from claims_agents.tools.mocks.db import load_fixtures
 
 log = get_logger(__name__)
-
-
-def ensure_seeded(settings: Settings) -> None:
-    db = DomainDB(settings.domain_db_path)
-    if not db.query("SELECT 1 FROM customers LIMIT 1"):
-        db.seed(*load_fixtures(PROJECT_ROOT / "data" / "fixtures"))
-    db.close()
 
 
 async def _sweep_loop(service: ChatService, interval: int) -> None:
@@ -79,10 +65,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         configure_logging()
-        ensure_seeded(settings)
-        hub, bus, control = ChatHub(), EventBus(), PauseControl()
-        store = EventStore(settings.events_db_path)
-        registry = build_registry(settings, delivery=hub.deliver, observer=tool_observer)
+        hub = ChatHub()
         llm = build_llm_client() if settings.llm.enabled else None
         llm_cfg = load_llm_config()
         log.info(
@@ -93,12 +76,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "model": llm_cfg.default.model,
             },
         )
-        async with open_checkpointer(settings.checkpoints_db_path) as saver:
-            graph = build_graph(
-                GraphDeps(registry=registry, settings=settings, control=control, llm=llm), saver
-            )
+        async with open_runtime(settings, llm=llm, delivery=hub.deliver) as runtime:
             app.state.hub = hub
-            service = ChatService(settings, graph, store, bus, control)
+            service = runtime.service
             app.state.service = service
             sweeper = (
                 asyncio.create_task(_sweep_loop(service, settings.documents.sweep_interval_seconds))
@@ -108,7 +88,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             yield
             if sweeper is not None:
                 sweeper.cancel()
-        store.close()
 
     app = FastAPI(title="Claims Agents PoC", lifespan=lifespan)
     app.add_middleware(

@@ -30,3 +30,10 @@ roles:
     temperature: 0.4
   guardrail_classifier: {}
   intent: {}
+
+# Preços para a estimativa de custo da avaliação (USD por 1 milhão de tokens).
+# Valores de referência — confira a tabela vigente do provedor antes de citar custos.
+pricing_usd_per_1m:
+  gemini-flash-latest: {input: 0.30, output: 2.50}
+  gemini-flash-lite-latest: {input: 0.10, output: 0.40}
+  default: {input: 0.30, output: 2.50}
