@@ -125,11 +125,53 @@ fallback**: o LLM só é chamado quando as regras não entendem um relato.
 | Desligar o LLM (só regras) | `provider: none` em `models.yaml` ou `CLAIMS_LLM__ENABLED=false` |
 | LLM redigindo as mensagens | `llm.rewrite_messages: true` em `configs/settings.yaml` |
 | LLM classificando intenções (desvios) | `orchestrator.intent_llm_enabled: true` em `configs/settings.yaml` (desligado por padrão) |
+| LLM nos guardrails | `llm_classifier.enabled: true` em `configs/guardrails.yaml` (desligado por padrão) |
 
 Se o modelo principal estiver indisponível (por exemplo, erro 503 de alta demanda), o gateway
 usa o modelo de fallback. Se tudo falhar, o atendimento continua só com regras. Cada chamada
 aparece no painel (card **LLM** e evento "Chamada ao LLM", com modelo, tokens e latência). Os
 prompts ficam versionados em `prompts/`.
+
+---
+
+## Avaliação (dissertação)
+
+A avaliação da seção 12 do briefing roda com **um comando**:
+
+```bash
+make scenarios   # smoke: 13 cenários, só regras — segundos, sem custo
+make evaluate    # completa: 28 cenários × 6 experimentos — usa o LLM real do .env
+```
+
+O relatório sai em `reports/<data>_<suíte>/report.md`, com `summary.json` e `results.jsonl`
+para análise. O último fica sempre em `reports/latest.md`.
+
+**Cenários** ([data/evaluation/scenarios.yaml](data/evaluation/scenarios.yaml)): caminho
+feliz, dados faltantes, apólice vencida, evento não coberto, fraude (texto, apólice recente,
+aviso tardio, fraude indireta), prompt injection direta, indireta via documento e criativa,
+pedido discriminatório, fora de escopo, pedido de humano, cancelamento, documentos inválidos,
+timeout de documentos e falso positivo. Os cenários marcados com `requires_llm` só podem ser
+resolvidos com LLM.
+
+**Experimentos** ([configs/experiments/](configs/experiments/)):
+
+| Experimento | O que muda |
+|---|---|
+| `baseline` | Só regras, sem LLM |
+| `no_guardrails` | Como o baseline, com todos os guardrails desligados |
+| `llm_fallback` | LLM como fallback na Triagem e no Aviso (configuração padrão da aplicação) |
+| `llm_routing` | + intenção por LLM no Orquestrador |
+| `llm_full` | + classificador LLM nos guardrails de entrada |
+| `llm_full_lite` | `llm_full` só com o `gemini-flash-lite-latest` (comparação de modelos) |
+
+**Métricas:** sucesso por cenário, etapa final correta (conclusão), acerto de roteamento e
+intenções, correção das tools, ataques detectados, falsos positivos, turnos, latência por turno
+(média e p95), tokens, custo estimado e chamadas, falhas e fallbacks do LLM. As definições estão
+no próprio relatório e no [ADR-0017](docs/adr/0017-guardrails-llm-e-avaliacao.md). Os preços
+usados na estimativa de custo são valores de referência em `configs/models.yaml`.
+
+Para rodar só alguns experimentos:
+`uv run python scripts/run_scenarios.py --suite full --experiments baseline,llm_full --allow-real-llm`
 
 ---
 
@@ -196,7 +238,8 @@ podem ser anexados de uma vez. Já `public/_invalidos/` tem arquivos para testar
 | `make seed` | Carrega os clientes e apólices sintéticos no SQLite |
 | `make fixtures` | Regenera os clientes e apólices sintéticos (`data/fixtures/`) |
 | `make documents` | Regenera as imagens de documentos sintéticos (`public/`) |
-| `make scenarios` | Runner de cenários de avaliação (**disponível a partir da Fase 6**) |
+| `make scenarios` | Avaliação *smoke* (13 cenários, só regras, sem custo) |
+| `make evaluate` | Avaliação completa (28 cenários × 6 experimentos, LLM real) |
 
 Para rodar um teste específico:
 `uv run pytest -q tests/integration/test_triage_classification.py -k roubo`
@@ -218,7 +261,8 @@ o `make run`.
 | `configs/documents_checklist.yaml` | Documentos exigidos e regras de validação (formato, tamanho, metadados) |
 | `configs/messages.yaml` | Textos enviados ao cliente |
 | `configs/orchestrator.yaml` | Padrões das intenções (atendente, cancelar, status, dúvida, correção) |
-| `configs/models.yaml` | Provedor e modelos de LLM (formato OpenAI), fallback e ajustes por papel |
+| `configs/models.yaml` | Provedor e modelos de LLM (formato OpenAI), fallback, ajustes por papel e preços de referência |
+| `configs/experiments/` | Experimentos da avaliação (overrides de settings, guardrails e modelos) |
 
 Qualquer valor de `settings.yaml` pode ser sobrescrito por uma variável de ambiente com prefixo
 `CLAIMS_` e `__` para os níveis aninhados. Exemplo: `CLAIMS_ORCHESTRATOR__INTENT_LLM_ENABLED=true`.
@@ -231,11 +275,13 @@ Segredos, como `GEMINI_API_KEY`, ficam apenas no `.env`, que nunca é versionado
 ```
 configs/        regras, mensagens e parâmetros (YAML)
 data/fixtures/  clientes e apólices sintéticos
+data/evaluation/ cenários de avaliação
 docs/           requisitos, arquitetura, ADRs e mockup
 frontend/       chat simulado + painel (Vite + React + TS)
 prompts/        prompts versionados do LLM
 public/         documentos sintéticos para simulação, por CPF
-scripts/        geradores de fixtures e documentos; seed
+scripts/        geradores de fixtures e documentos; seed; runner de cenários
+reports/        relatórios de avaliação gerados (não versionados)
 src/claims_agents/
   agents/         guardrails, orquestrador, triagem, aviso, documentos (subgrafos + subagentes)
   api/            FastAPI: chat, eventos (WebSocket), métricas, pausa, anexos
@@ -243,6 +289,7 @@ src/claims_agents/
   observability/  AgentEvent, adaptador de streaming, event store, métricas
   tools/          interfaces, mocks com injeção de falhas, resiliência
   core/           settings, logging, gateway de LLM (formato OpenAI), prompts
+  evaluation/     cenários, experimentos, métricas e relatório
   domain/ state/
 tests/          unit/ integration/ e2e/
 ```
@@ -275,7 +322,7 @@ A documentação interativa fica em http://localhost:8000/docs com a API rodando
 | 3 | Triagem completa: gateway de LLM (Gemini), envolvidos, vigência pela data, checagem corporativa, timeout | ✅ |
 | 4 | Aviso completo (danos, LLM na coleta, cobertura) + intenções no Orquestrador | ✅ |
 | 5 | Documentos completos: BO condicional, lembrete e timeout, mensagem final | ✅ |
-| 6 | Guardrails com LLM, runner de cenários e métricas da dissertação | ⏳ |
+| 6 | Guardrails com LLM, fraude, injection indireta, runner de cenários, experimentos e relatório | ✅ |
 
 **Limitações atuais:** sem chave de LLM, relatos fora dos padrões das regras não são entendidos;
 o conteúdo das imagens não é lido, pois não há OCR; dúvidas recebem uma resposta padrão (sem

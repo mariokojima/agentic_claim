@@ -7,26 +7,27 @@ description: Executa os cenários de avaliação (smoke ou bateria completa) con
 
 ## Comandos
 ```bash
-make scenarios                                   # smoke (~10 cenários), LLM falso/gravado
-uv run python scripts/run_scenarios.py --suite full --config configs/experiments/<exp>.yaml
-uv run python scripts/run_scenarios.py --scenario happy_path -v
+make scenarios                    # smoke (13 cenários), só regras, sem LLM — segundos
+make evaluate                     # full (28) × todos os experimentos, LLM real do .env
+uv run python scripts/run_scenarios.py --suite full --experiments baseline,llm_full --allow-real-llm
+uv run python scripts/run_scenarios.py --suite smoke --experiments no_guardrails
 ```
+Relatório: `reports/<data>_<suíte>/report.md` (+ `summary.json`, `results.jsonl`); o último fica
+em `reports/latest.md`. Padrão sequencial (`--concurrency 1`): concorrência infla a latência.
 
-## Cenários (`data/evaluation/<suite>/*.yaml`)
-Cada cenário: `id`, `customer_phone`, `turns` (texto + anexos), `expected` (estado terminal,
-especialistas visitados, tools chamadas, vereditos de guardrail). Cobertura mínima: caminho feliz,
-dados faltantes, apólice vencida, evento não coberto, fraude, injection direta e indireta (documento),
-fora de escopo, pedido de humano.
+## Cenários (`data/evaluation/scenarios.yaml`)
+Campos: `id`, `title`, `category`, `suites`, `customer` (prefixo do nome nos fixtures),
+`attack`, `requires_llm`, `turns` (texto com `{cpf}`, `{text, documents}` com arquivos de
+`public/<cpf>/` ou `_invalidos/`, ou `{timer: reminder|timeout}`) e `expected` (`final_stage`,
+`terminal_reason`, `specialists`, `tools_required`, `tools_forbidden`, `intents`).
+Novo cenário: adicione ao YAML; se for resolvível só com regras, o teste
+`tests/evals/test_scenarios.py` passa a exigi-lo no smoke.
 
-## Saída
-`reports/<timestamp>/` com `results.jsonl` (um por cenário) e `summary.md` com: acerto de roteamento,
-taxa de conclusão, correção das tools, bloqueio de ataques vs. falsos positivos, turnos, latência,
-tokens e custo estimado.
+## Experimentos (`configs/experiments/*.yaml`)
+`baseline`, `no_guardrails`, `llm_fallback`, `llm_routing`, `llm_full`, `llm_full_lite`.
+Cada um sobrescreve `settings`, `guardrails` e `models` (merge profundo). `llm: true` exige
+`--allow-real-llm` e chave no `.env`.
 
 ## Como resumir
-Delegue a execução a um subagente de modelo menor e traga apenas: nº de cenários, falhas (id +
-esperado vs. obtido) e as métricas agregadas. Não cole logs inteiros.
-
-## Experimentos
-Configs em `configs/experiments/`: `no_guardrails.yaml`, `intent_llm_on.yaml`, `model_<x>.yaml`.
-Rodar com LLM real exige `.env` com chave e `--allow-real-llm`.
+Delegue a execução a um subagente de modelo menor e traga só: tabela comparativa, falhas
+(esperado × obtido) e observações sobre falhas/fallback do LLM. Não cole logs inteiros.

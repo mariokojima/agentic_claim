@@ -18,3 +18,4 @@
 | [0014](0014-triagem-entende-o-ocorrido.md) | Triagem entende o ocorrido antes de abrir o aviso | aceito |
 | [0015](0015-gateway-llm-formato-openai.md) | Gateway de LLM no formato OpenAI (Gemini) | aceito |
 | [0016](0016-aviso-completo-e-intencoes.md) | Aviso completo e intenções do Orquestrador | aceito |
+| [0017](0017-guardrails-llm-e-avaliacao.md) | Guardrails com LLM e desenho da avaliação | aceito |

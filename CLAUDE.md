@@ -22,7 +22,8 @@ make seed               # carrega fixtures sintéticos no SQLite (data/claims.db
 make documents          # gera imagens de documentos sintéticos em public/<cpf>/ (caminho feliz)
 make run                # API em http://localhost:8000, em modo demonstração (DEMO_DELAY_MS=0 desliga; ADR-0012)
 make dev-front          # frontend Vite em http://localhost:5173 (proxy /api → API)
-make scenarios          # runner de cenários de avaliação (Fase 6)
+make scenarios          # avaliação smoke, só regras (sem LLM, sem custo)
+make evaluate           # avaliação completa × experimentos (LLM real; relatório em reports/latest.md)
 ```
 
 Rodar um teste: `uv run pytest -q tests/unit/tools/test_customer_data.py -k not_found`.

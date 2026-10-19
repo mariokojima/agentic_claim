@@ -61,6 +61,8 @@ computacional, outros ramos de seguro, regressão de etapa (ADR-0010).
 - **Experimentos (via config):** com/sem guardrails, com/sem LLM no roteamento, modelos diferentes.
 - **Taxa de sucesso:** ver ADR-0006.
 - **Conjuntos:** *smoke* (~10 cenários) diário; bateria completa só nos experimentos.
+- **Execução:** `make scenarios` (smoke, só regras) e `make evaluate` (full × experimentos de
+  `configs/experiments/`); cenários em `data/evaluation/scenarios.yaml`; ADR-0017.
 
 ## 6. Fases e critérios de aceite
 
