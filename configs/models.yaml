@@ -1,13 +1,32 @@
-# Modelos por papel (ADR-0002). Inicialmente todos os papéis usam o mesmo modelo.
+# LLM no formato OpenAI (chat.completions) — ADR-0015.
+# Qualquer provedor com endpoint compatível com a API da OpenAI funciona trocando `provider`.
+# Chaves só no .env (variável indicada em api_key_env). `provider: none` desliga o LLM (só regras).
+provider: gemini
+
+providers:
+  gemini:
+    base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+    api_key_env: GEMINI_API_KEY
+  openai:
+    base_url: https://api.openai.com/v1
+    api_key_env: OPENAI_API_KEY
+  anthropic:
+    base_url: https://api.anthropic.com/v1/
+    api_key_env: ANTHROPIC_API_KEY
+
 default:
-  provider: anthropic        # anthropic | fake
-  model: claude-opus-5-5
+  model: gemini-flash-latest
+  fallback_models: [gemini-flash-lite-latest]  # usados em erros transitórios (ex.: 503 de alta demanda)
   temperature: 0.0
   max_tokens: 1024
   timeout_s: 30
+  max_retries: 0          # tentativas extras no mesmo modelo; 0 = vai direto ao fallback
+  backoff_base_s: 0.5
+
+# Ajustes por papel (herdam de default)
 roles:
-  guardrail_classifier: {}   # herda de default
-  extraction: {}
-  writer: {}
+  extraction: {}          # extração estruturada (classificação, envolvidos)
+  writer:                 # redação das mensagens ao cliente
+    temperature: 0.4
+  guardrail_classifier: {}
   intent: {}
-# Provedor falso para testes: provider: fake, responses: ["..."]

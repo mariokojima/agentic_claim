@@ -5,7 +5,6 @@ from pathlib import Path
 import pytest
 
 from claims_agents.core.errors import ConfigError
-from claims_agents.core.llm import get_chat_model, resolve_model_config
 from claims_agents.core.logging import JsonFormatter, PiiMaskingFilter
 from claims_agents.core.settings import Settings, load_config
 
@@ -44,17 +43,3 @@ def test_log_record_is_masked_json() -> None:
     out = json.loads(JsonFormatter().format(record))
     assert "52998224725" not in out["msg"]
     assert out["phone"].endswith("5678") and "912345678" not in out["phone"]
-
-
-def test_llm_factory_fake_and_role_override() -> None:
-    cfg = {
-        "default": {"provider": "fake", "responses": ["olá"]},
-        "roles": {"writer": {"temperature": 0.3}},
-    }
-    assert resolve_model_config("writer", cfg).temperature == 0.3
-    assert get_chat_model("writer", cfg).invoke("oi").content == "olá"
-
-
-def test_llm_factory_unknown_provider() -> None:
-    with pytest.raises(ConfigError):
-        get_chat_model("x", {"default": {"provider": "desconhecido"}})
