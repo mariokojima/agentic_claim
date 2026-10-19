@@ -71,6 +71,8 @@ button { font: inherit; cursor: pointer; }
 .file-btn { padding: 5px 10px; border-radius: 6px; background: var(--blue); color: #fff; cursor: pointer; }
 .hint { width: 100%; color: var(--muted); font-size: 11px; }
 .chat-error { background: #fde7e7; color: var(--red); font-size: 12px; padding: 6px 10px; cursor: pointer; }
+.idle-sim { display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: #fff8ec; border-top: 1px solid var(--border); font-size: 11.5px; color: var(--muted); }
+.idle-sim button { font-size: 11.5px; padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border); background: #fff; }
 .composer { display: flex; align-items: center; gap: 8px; padding: 10px; background: #fafafa; border-top: 1px solid var(--border); }
 .composer input { flex: 1; padding: 9px 14px; border-radius: 20px; border: 1px solid var(--border); font-size: 14px; outline: none; }
 .icon-btn, .send-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: transparent; color: var(--blue); font-size: 20px; }

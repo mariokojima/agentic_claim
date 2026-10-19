@@ -92,6 +92,12 @@ export const api = {
       body: form,
     }).then((r) => json<UploadedAttachment>(r));
   },
+  simulateIdle: (conversationId: string, kind: "reminder" | "timeout") =>
+    fetch(`${API}/conversations/${conversationId}/simulate-idle`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind }),
+    }).then((r) => json<{ state: ConversationState }>(r)),
   setPause: (paused: boolean, conversationId?: string) =>
     fetch(`${API}/control/pause`, {
       method: "POST",

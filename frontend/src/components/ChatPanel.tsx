@@ -97,6 +97,16 @@ export function ChatPanel({ conversationId }: { conversationId: string | null })
   };
 
   const stage = state?.claim_stage ?? "TRIAGEM";
+  const simulate = async (kind: "reminder" | "timeout") => {
+    if (!conversationId) return;
+    setError(null);
+    try {
+      const out = await api.simulateIdle(conversationId, kind);
+      setState((prev) => ({ ...(prev ?? out.state), ...out.state, messages: undefined }));
+    } catch (e) {
+      setError(String(e));
+    }
+  };
   return (
     <div className="phone">
       <div className="phone-status">
@@ -160,6 +170,13 @@ export function ChatPanel({ conversationId }: { conversationId: string | null })
               📎 {p.filename} <small>{p.doc_type ?? "sem tipo"}</small>
             </span>
           ))}
+        </div>
+      ) : null}
+      {stage === "DOCUMENTOS" ? (
+        <div className="idle-sim" title="Simula o cliente parado nesta etapa (ADR-0004)">
+          <span>Simular inatividade:</span>
+          <button onClick={() => void simulate("reminder")}>⏰ Lembrete</button>
+          <button onClick={() => void simulate("timeout")}>⌛ Prazo expirado</button>
         </div>
       ) : null}
       <div className="composer">
