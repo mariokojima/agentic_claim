@@ -72,6 +72,17 @@ def build_stage(stage: StageName, config: dict[str, Any]) -> NodeFn[GuardrailGra
 
 def _context_rules(rules: dict[str, Any], context: dict[str, Any]) -> GuardrailCheck | None:
     """Regras que dependem do contexto do segurado (ex.: apólice muito recente)."""
+    late = rules.get("late_notice") or {}
+    event_date, today = context.get("event_date"), context.get("today")
+    if late.get("enabled", False) and event_date and today:
+        delay = (date.fromisoformat(str(today)) - date.fromisoformat(str(event_date))).days
+        if delay > int(late.get("max_days", 30)):
+            return GuardrailCheck(
+                stage="corporate",
+                decision=late.get("action", "escalate"),
+                reason=f"[late_notice] {late.get('reason', '')} ({delay} dias)",
+                rule="late_notice",
+            )
     recent = rules.get("recent_policy") or {}
     start, event = context.get("policy_start_date"), context.get("event_date")
     if recent.get("enabled", False) and start and event:

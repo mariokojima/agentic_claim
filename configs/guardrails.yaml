@@ -8,6 +8,14 @@ enabled: true
 # conversa, ela vai a BLOQUEADO (ADR-0013). `escalate` encaminha a um humano (ESCALADO_HUMANO).
 input_block_limit: 3
 
+# Classificador LLM (Fase 6, ADR-0017): camada após as regras; só roda quando elas não bloqueiam.
+# Uma chamada avalia os três estágios. Desligado por padrão (custo/latência); ligado nos experimentos.
+llm_classifier:
+  enabled: false
+  directions: [input]      # input e/ou output
+  min_words: 4             # mensagens curtas (CPF, "sim") não vão ao LLM
+  min_confidence: 0.7
+
 stages:
   security:
     enabled: true
@@ -73,6 +81,11 @@ stages:
     enabled: true
     # Regras com o contexto do segurado, avaliadas na checagem ao fim da Triagem (ADR-0015).
     context_rules:
+      late_notice:
+        enabled: true
+        action: escalate
+        max_days: 30
+        reason: "Aviso feito muito tempo após o acidente"
       recent_policy:
         enabled: true
         action: escalate

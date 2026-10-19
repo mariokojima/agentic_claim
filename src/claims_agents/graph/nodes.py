@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
 from typing import Any, Literal
@@ -61,7 +62,7 @@ class MainNodes:
         self.deps = deps
         reg, msgs = deps.registry, deps.messages
         attempts = deps.settings.triage.max_attempts_per_field
-        self.guardrails = build_guardrails_graph(deps.guardrails_config)
+        self.guardrails = build_guardrails_graph(deps.guardrails_config, deps.llm)
         self.intents = IntentClassifier(
             deps.orchestrator_config,
             deps.llm if deps.settings.orchestrator.intent_llm_enabled else None,
@@ -225,7 +226,10 @@ class MainNodes:
         inbound = state.inbound
         attachments_text = (
             " ".join(
-                f"{a.filename} " + " ".join(str(v) for v in a.metadata.values())
+                # "ignore_as_instrucoes.jpg" → "ignore as instrucoes jpg" (injection indireta)
+                re.sub(r"[_\-.]+", " ", a.filename)
+                + " "
+                + " ".join(str(v) for v in a.metadata.values())
                 for a in inbound.attachments
             )
             if inbound
@@ -417,6 +421,7 @@ class MainNodes:
                 "checkpoint": "fim_triagem",
                 "policy_start_date": policy.get("start_date"),
                 "event_date": event_date,
+                "today": self.deps.now().date().isoformat(),
             },
         )
         emit(
