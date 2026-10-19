@@ -31,7 +31,7 @@ Rodar um teste: `uv run pytest -q tests/unit/tools/test_customer_data.py -k not_
 
 ```
 configs/      models.yaml, settings.yaml, guardrails.yaml, triage_rules.yaml, documents_checklist.yaml,
-              messages.yaml (textos determinísticos ao cliente)
+              messages.yaml (textos ao cliente), orchestrator.yaml (intenções)
 prompts/      prompts versionados (espelham agents/)
 data/         fixtures/ (clientes, apólices) · evaluation/ (cenários)
 src/claims_agents/

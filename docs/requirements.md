@@ -48,7 +48,7 @@ computacional, outros ramos de seguro, regressão de etapa (ADR-0010).
 ## 4. Estados do processo
 
 `TRIAGEM → AVISO → DOCUMENTOS → CONCLUIDO`. Terminais alternativos: `ORIENTADO`, `BLOQUEADO`,
-`ESCALADO_HUMANO`.
+`ESCALADO_HUMANO` e `CANCELADO` (cliente desistiu; ADR-0016).
 
 ## 5. Avaliação (dissertação)
 

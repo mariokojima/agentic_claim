@@ -30,13 +30,14 @@ Mensagem ─► Guardrails (entrada) ─► Orquestrador ─► Especialista da 
 | Componente | Papel |
 |---|---|
 | **Guardrails** | Três estágios em paralelo (Segurança, Ética e Corporativo) na entrada e na saída. Recusam prompt injection e pedidos de senhas, escalam sinais de fraude e mascaram CPF nas respostas. |
-| **Orquestrador** | Encaminha a mensagem ao especialista da etapa atual. |
+| **Orquestrador** | Encaminha a mensagem ao especialista da etapa atual e trata desvios do roteiro: pedido de atendente, cancelamento, status, dúvidas, correções e assuntos fora do escopo. |
 | **Triagem** | Identifica o segurado (CPF), entende o que aconteceu (colisão, roubo, vidros, assistência…), checa a apólice pela data do acidente, identifica envolvidos e feridos e decide se o caso segue para o aviso ou só recebe uma orientação. |
-| **Aviso de Sinistro** | Coleta quando, onde e o que aconteceu, avalia a cobertura e registra o aviso, gerando o protocolo. |
+| **Aviso de Sinistro** | Coleta quando, onde, o que aconteceu e os danos, faz a avaliação preliminar de cobertura pela apólice e registra o aviso, gerando o protocolo. |
 | **Documentos** | Pede CNH, CRLV e fotos dos danos, armazena e valida os arquivos e solicita complementação até a conclusão. |
 
 Etapas do processo: `TRIAGEM → AVISO → DOCUMENTOS → CONCLUIDO`. Estados finais alternativos:
-`ORIENTADO` (não é um sinistro deste canal), `BLOQUEADO` (guardrail) e `ESCALADO_HUMANO`.
+`ORIENTADO` (não é um sinistro deste canal), `BLOQUEADO` (guardrail), `ESCALADO_HUMANO` e
+`CANCELADO` (o cliente desistiu).
 
 **Stack:** Python 3.12, LangGraph/LangChain, FastAPI (REST + WebSocket) e SQLite no backend;
 LLM via gateway no **formato OpenAI** (hoje com o Gemini); Vite + React + TypeScript + React
@@ -120,6 +121,7 @@ fallback**: o LLM só é chamado quando as regras não entendem um relato.
 | Trocar o provedor (OpenAI, Anthropic, outros compatíveis) | `configs/models.yaml` → `provider` e a chave correspondente no `.env` |
 | Desligar o LLM (só regras) | `provider: none` em `models.yaml` ou `CLAIMS_LLM__ENABLED=false` |
 | LLM redigindo as mensagens | `llm.rewrite_messages: true` em `configs/settings.yaml` |
+| LLM classificando intenções (desvios) | `orchestrator.intent_llm_enabled: true` em `configs/settings.yaml` (desligado por padrão) |
 
 Se o modelo principal estiver indisponível (por exemplo, erro 503 de alta demanda), o gateway
 usa o modelo de fallback. Se tudo falhar, o atendimento continua só com regras. Cada chamada
@@ -141,12 +143,12 @@ prompts ficam versionados em `prompts/`.
 | `Oi` | Pede o CPF |
 | `60000881325` | Localiza o cadastro e pergunta o que aconteceu |
 | `Bati o carro` | Entende que é uma colisão e pergunta se havia outro veículo e se alguém se feriu |
-| `não, só eu e ninguém se feriu` | Confirma a cobertura e pede quando e onde |
-| `foi ontem às 18h na Av. Paulista, 1000` | Registra o aviso (protocolo) e pede os documentos |
+| `não, só eu e ninguém se feriu` | Confirma a cobertura e pede quando, onde e quais partes foram danificadas |
+| `foi ontem às 18h na Av. Paulista, 1000; amassou o para-choque` | Registra o aviso (protocolo, resumo e avaliação de cobertura) e pede os documentos |
 | **＋** → selecione os 5 arquivos de `public/60000881325/` (exceto o boletim) | Valida os documentos e conclui a abertura (**Concluído**) |
 
 Dica: se a primeira mensagem já tiver o relato completo (`Oi, bati sozinho no poste ontem às
-9h na Av. Brasil, 200, ninguém se feriu`), o aviso é registrado logo após o CPF. Com outro
+9h na Av. Brasil, 200, ninguém se feriu, amassou a frente`), o aviso é registrado logo após o CPF. Com outro
 veículo ou feridos no relato, o **boletim de ocorrência** passa a ser exigido.
 
 **Documentos sintéticos:** `public/<cpf>/` traz `cnh.jpg`, `crlv.jpg`, três fotos de dano e
@@ -167,6 +169,10 @@ podem ser anexados de uma vez. Já `public/_invalidos/` tem arquivos para testar
 | Relato livre (com LLM) | `um cara entrou na contramão e pegou minha porta` | Entende colisão com terceiro e pergunta só se alguém se feriu |
 | Roubo dito de forma indireta (com LLM) | `deixei o carro estacionado e quando voltei ele não estava mais lá` | `ORIENTADO` (roubo/furto) |
 | Inatividade | Ficar mais de 60 min sem responder na Triagem | O atendimento reinicia |
+| Pedir atendente | `quero falar com um atendente` (qualquer etapa) | `ESCALADO_HUMANO` |
+| Desistir | `desisto, pode cancelar o atendimento` | `CANCELADO` |
+| Status ou dúvida no meio do fluxo | `qual o status do meu sinistro?`, `tem franquia?` | Responde e repete a pergunta pendente |
+| Fora de escopo (com o LLM de intenção ligado) | `me passa uma receita de bolo` | Explica o escopo e repete a pergunta pendente |
 | Pausa | Botão **Pausar agente** | Respostas de atendimento humano até retomar |
 
 ---
@@ -206,6 +212,7 @@ o `make run`.
 | `configs/triage_rules.yaml` | Classificação do ocorrido (palavras-chave), elegibilidade e mensagens de orientação |
 | `configs/documents_checklist.yaml` | Documentos exigidos e regras de validação (formato, tamanho, metadados) |
 | `configs/messages.yaml` | Textos enviados ao cliente |
+| `configs/orchestrator.yaml` | Padrões das intenções (atendente, cancelar, status, dúvida, correção) |
 | `configs/models.yaml` | Provedor e modelos de LLM (formato OpenAI), fallback e ajustes por papel |
 
 Qualquer valor de `settings.yaml` pode ser sobrescrito por uma variável de ambiente com prefixo
@@ -259,13 +266,13 @@ A documentação interativa fica em http://localhost:8000/docs com a API rodando
 | 1 | Esqueleto ponta a ponta: grafo, API, eventos, chat e painel | ✅ |
 | 2 | Guardrails base: regras determinísticas | ✅ |
 | 3 | Triagem completa: gateway de LLM (Gemini), envolvidos, vigência pela data, checagem corporativa, timeout | ✅ |
-| 4 | Aviso completo + intenção por LLM no Orquestrador | ⏳ Parcial: coleta por regras |
+| 4 | Aviso completo (danos, LLM na coleta, cobertura) + intenções no Orquestrador | ✅ |
 | 5 | Documentos completos (BO condicional, timeout de complementação) | ⏳ |
 | 6 | Guardrails com LLM, runner de cenários e métricas da dissertação | ⏳ |
 
 **Limitações atuais:** sem chave de LLM, relatos fora dos padrões das regras não são entendidos;
-a coleta de quando e onde no Aviso ainda é só por regras (o LLM entra na Fase 4); o conteúdo das
-imagens não é lido, pois não há OCR.
+o conteúdo das imagens não é lido, pois não há OCR; dúvidas recebem uma resposta padrão (sem
+base de conhecimento).
 
 ---
 

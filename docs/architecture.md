@@ -34,7 +34,7 @@ orchestrator ◄──────────── etapa concluída (hops < ma
 ## 2. Estados do processo
 
 `ClaimStage`: `TRIAGEM → AVISO → DOCUMENTOS → CONCLUIDO`; terminais `ORIENTADO`, `BLOQUEADO`,
-`ESCALADO_HUMANO`. **Só `graph/transitions.py` altera `claim_stage`.**
+`ESCALADO_HUMANO`, `CANCELADO`. **Só `graph/transitions.py` altera `claim_stage`.**
 
 | Etapa | Especialista | `completed` leva a | `rejected` leva a |
 |---|---|---|---|
@@ -60,8 +60,10 @@ ligados/desligados em `configs/guardrails.yaml`; motor em `agents/guardrails/rul
 
 **Orquestrador** (`agents/orchestrator/`): `routing_policy.py` com a tabela fixa
 `claim_stage → especialista`; com `awaiting` setado, despacha direto ao especialista da etapa.
-`intent.py` (flag `orchestrator.intent_llm_enabled`) só em desvios. Todo despacho emite evento
-`route` com motivo.
+`intent.py` detecta desvios por regras (`configs/orchestrator.yaml`) e, com a flag
+`orchestrator.intent_llm_enabled`, por LLM quando as regras não resolvem: humano (→ transição para
+`ESCALADO_HUMANO`), cancelar (→ `CANCELADO`), status/dúvida/fora de escopo (resposta + retomada da
+`pending_question`) e correção (registrada; ADR-0010/0016). Todo despacho emite `route` com motivo.
 
 **Transição** (`graph/transitions.py`): aplica o `StageResult`. Se `completed` e a nova etapa não é
 terminal, incrementa `hops` e volta ao Orquestrador (limite `graph.max_hops_per_turn`, default 5;
@@ -72,7 +74,7 @@ estourou → `ESCALADO_HUMANO`). Se `needs_input` ou terminal, segue para `guard
 | Especialista | Subagentes | Tools |
 |---|---|---|
 | triage | customer_validation → event_classification → decision → parties (envolvidos) | `get_customer_data`, `send_whatsapp` (outbox) |
-| claim_notice | event_data_collection, coverage_assessment, registration | `open_claim`, `send_whatsapp` (outbox) |
+| claim_notice | event_data_collection (quando/onde/o que/danos; LLM como fallback), coverage_assessment (pela apólice), registration | `open_claim`, `send_whatsapp` (outbox) |
 | documents | checklist, intake_storage, validation, complement | `store_files`, `validate_document`, `send_whatsapp` (outbox) |
 
 Os especialistas são máquinas de estado retomáveis: o progresso fica no sub-estado namespaced
