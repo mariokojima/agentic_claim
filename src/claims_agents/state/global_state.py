@@ -36,6 +36,8 @@ class Inbound(BaseModel):
     text: str = ""
     attachments: list[InboundAttachment] = Field(default_factory=list)
     received_at: datetime = Field(default_factory=_now)
+    # "user" = mensagem do cliente; "reminder"/"timeout" = disparos do verificador de inatividade
+    kind: Literal["user", "reminder", "timeout"] = "user"
 
 
 class ChatMessage(BaseModel):
@@ -100,6 +102,7 @@ class DocumentsState(BaseModel):
     step: str = "start"
     received: list[ReceivedDocument] = Field(default_factory=list)
     requirements: dict[str, Any] = Field(default_factory=dict)
+    reminded_at: datetime | None = None  # último lembrete de complementação enviado
 
 
 class GlobalState(BaseModel):

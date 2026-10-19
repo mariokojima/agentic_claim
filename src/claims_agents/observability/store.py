@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import json
 import sqlite3
 import threading
@@ -82,6 +83,11 @@ class EventStore:
                 "SELECT * FROM conversations WHERE id = ?", (conversation_id,)
             ).fetchone()
         return dict(row) if row else None
+
+    def list_conversations(self) -> builtins.list[str]:
+        with self._lock:
+            rows = self._conn.execute("SELECT id FROM conversations ORDER BY created_at").fetchall()
+        return [r["id"] for r in rows]
 
     def close(self) -> None:
         self._conn.close()

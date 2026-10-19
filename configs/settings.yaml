@@ -14,7 +14,11 @@ llm:
   enabled: true
   rewrite_messages: false          # true: o LLM redige as mensagens (sempre passando pelo guardrail de saída)
 documents:
-  complement_timeout_hours: 72
+  # Sem envio de documentos: lembrete e, depois do prazo, encaminhamento a humano (ADR-0004).
+  # Para demonstrar, use valores pequenos (ex.: CLAIMS_DOCUMENTS__REMINDER_MINUTES=1).
+  reminder_minutes: 1440           # 24 h
+  complement_timeout_minutes: 4320 # 72 h
+  sweep_interval_seconds: 60       # verificador periódico na API (0 = desligado)
 pause:
   handoff_message: "Seu atendimento foi transferido para um de nossos especialistas humanos. Em breve alguém dará continuidade por aqui."
 metrics:

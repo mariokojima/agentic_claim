@@ -20,6 +20,7 @@ from claims_agents.api.schemas import (
     CreateConversation,
     PauseRequest,
     SendMessage,
+    SimulateIdle,
     TurnOut,
 )
 from claims_agents.api.service import ChatService, ConversationNotFound, UploadNotFound
@@ -46,6 +47,18 @@ def ensure_seeded(settings: Settings) -> None:
     if not db.query("SELECT 1 FROM customers LIMIT 1"):
         db.seed(*load_fixtures(PROJECT_ROOT / "data" / "fixtures"))
     db.close()
+
+
+async def _sweep_loop(service: ChatService, interval: int) -> None:
+    """Verificador periódico de inatividade na etapa de Documentos (ADR-0004)."""
+    while True:
+        await asyncio.sleep(interval)
+        try:
+            actions = await service.sweep()
+            if actions:
+                log.info("sweep", extra={"actions": len(actions)})
+        except Exception:  # o verificador nunca derruba a API
+            log.exception("sweep_failed")
 
 
 def _state_out(conversation_id: str, phone: str, state: GlobalState | None) -> ConversationState:
@@ -85,8 +98,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 GraphDeps(registry=registry, settings=settings, control=control, llm=llm), saver
             )
             app.state.hub = hub
-            app.state.service = ChatService(settings, graph, store, bus, control)
+            service = ChatService(settings, graph, store, bus, control)
+            app.state.service = service
+            sweeper = (
+                asyncio.create_task(_sweep_loop(service, settings.documents.sweep_interval_seconds))
+                if settings.documents.sweep_interval_seconds > 0
+                else None
+            )
             yield
+            if sweeper is not None:
+                sweeper.cancel()
         store.close()
 
     app = FastAPI(title="Claims Agents PoC", lifespan=lifespan)
@@ -191,6 +212,25 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/control/pause")
     async def get_pause(request: Request) -> dict[str, Any]:
         return svc(request).control.snapshot().model_dump()
+
+    @app.post("/control/sweep")
+    async def sweep(request: Request) -> dict[str, Any]:
+        """Roda agora o verificador de inatividade (lembrete/timeout de documentos)."""
+        return {"actions": await svc(request).sweep()}
+
+    @app.post("/conversations/{conversation_id}/simulate-idle", response_model=TurnOut)
+    async def simulate_idle(conversation_id: str, body: SimulateIdle, request: Request) -> TurnOut:
+        """Simulador: dispara o lembrete ou o timeout como se o cliente estivesse inativo."""
+        service = svc(request)
+        before = await service.state_of(conversation_id)
+        n_before = len(before.messages) if before else 0
+        result = await service.handle_timer(conversation_id, body.kind)
+        replies = [m for m in result.state.messages[n_before:] if m.role == "assistant"]
+        return TurnOut(
+            state=_state_out(conversation_id, service.phone_of(conversation_id), result.state),
+            replies=replies,
+            events=len(result.events),
+        )
 
     @app.post("/control/pause")
     async def set_pause(body: PauseRequest, request: Request) -> dict[str, Any]:

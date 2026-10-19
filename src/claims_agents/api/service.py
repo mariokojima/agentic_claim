@@ -6,16 +6,17 @@ import asyncio
 import shutil
 import uuid
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from langgraph.graph.state import CompiledStateGraph
 
 from claims_agents.core.errors import ClaimsAgentsError
 from claims_agents.core.settings import Settings
-from claims_agents.domain import DocumentType
+from claims_agents.domain import ClaimStage, DocumentType
 from claims_agents.graph.control import PauseControl
 from claims_agents.graph.runner import TurnResult, get_state, run_turn
 from claims_agents.observability.bus import EventBus
@@ -40,6 +41,7 @@ class ChatService:
     store: EventStore
     bus: EventBus
     control: PauseControl
+    now: Callable[[], datetime] = field(default=lambda: datetime.now(UTC))
     _locks: dict[str, asyncio.Lock] = field(default_factory=lambda: defaultdict(asyncio.Lock))
     _uploads: dict[str, InboundAttachment] = field(default_factory=dict)
 
@@ -129,6 +131,44 @@ class ChatService:
             )
         self.bus.publish({"type": "metrics", "metrics": self.metrics().model_dump(mode="json")})
         return result
+
+    async def handle_timer(
+        self, conversation_id: str, kind: Literal["reminder", "timeout"]
+    ) -> TurnResult:
+        """Disparo do verificador de inatividade (não é mensagem do cliente)."""
+        self.phone_of(conversation_id)
+        async with self._locks[conversation_id]:
+            result = await run_turn(
+                self.graph,
+                conversation_id,
+                Inbound(kind=kind),
+                sinks=[self._persist_and_publish],
+            )
+        self.bus.publish({"type": "metrics", "metrics": self.metrics().model_dump(mode="json")})
+        return result
+
+    async def sweep(self) -> list[dict[str, str]]:
+        """Lembrete/timeout de complementação para conversas paradas em Documentos (ADR-0004)."""
+        cfg = self.settings.documents
+        actions: list[dict[str, str]] = []
+        for conversation_id in self.store.list_conversations():
+            state = await get_state(self.graph, conversation_id)
+            if state is None or state.claim_stage != ClaimStage.DOCUMENTOS or not state.awaiting:
+                continue
+            last = next((m.ts for m in reversed(state.messages) if m.role == "user"), None)
+            if last is None:
+                continue
+            idle = self.now() - last
+            reminded = state.documents.reminded_at
+            if idle > timedelta(minutes=cfg.complement_timeout_minutes):
+                await self.handle_timer(conversation_id, "timeout")
+                actions.append({"conversation_id": conversation_id, "action": "timeout"})
+            elif idle > timedelta(minutes=cfg.reminder_minutes) and (
+                reminded is None or reminded < last
+            ):
+                await self.handle_timer(conversation_id, "reminder")
+                actions.append({"conversation_id": conversation_id, "action": "reminder"})
+        return actions
 
     def _persist_and_publish(self, ev: AgentEvent) -> None:
         self.store.add(ev)

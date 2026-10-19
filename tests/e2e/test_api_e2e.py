@@ -17,7 +17,9 @@ from tests.support.conversation import JPEG, PDF
 
 @pytest.fixture
 def client(tmp_path: Path) -> Iterator[TestClient]:
-    with TestClient(create_app(Settings(data_dir=tmp_path))) as c:
+    settings = Settings(data_dir=tmp_path)
+    settings.documents.sweep_interval_seconds = 0  # verificador acionado manualmente nos testes
+    with TestClient(create_app(settings)) as c:
         yield c
 
 
@@ -159,3 +161,61 @@ def test_errors(client: TestClient) -> None:
         data={"doc_type": "INVALIDO"},
     )
     assert resp.status_code == 422
+
+
+def test_sweeper_sends_one_reminder_then_times_out(client: TestClient) -> None:
+    from datetime import UTC, datetime, timedelta
+
+    customer = ann(client)
+    conv = client.post("/conversations", json={"phone": customer["phone"]}).json()[
+        "conversation_id"
+    ]
+    for msg in (
+        "Oi",
+        customer["cpf"],
+        "ontem às 18h bati sozinho no poste da Av. Paulista, 1000, ninguém se feriu, "
+        "amassou a frente",
+    ):
+        out = client.post(f"/conversations/{conv}/messages", json={"text": msg}).json()
+    assert out["state"]["claim_stage"] == "DOCUMENTOS"
+    assert client.post("/control/sweep").json()["actions"] == []  # ainda dentro do prazo
+
+    service = client.app.state.service  # type: ignore[attr-defined]
+    cfg = service.settings.documents
+    start = datetime.now(UTC)
+    service.now = lambda: start + timedelta(minutes=cfg.reminder_minutes + 1)
+    assert client.post("/control/sweep").json()["actions"] == [
+        {"conversation_id": conv, "action": "reminder"}
+    ]
+    assert client.post("/control/sweep").json()["actions"] == []  # um lembrete por inatividade
+    service.now = lambda: start + timedelta(minutes=cfg.complement_timeout_minutes + 1)
+    assert client.post("/control/sweep").json()["actions"][0]["action"] == "timeout"
+    state = client.get(f"/conversations/{conv}").json()
+    assert (
+        state["claim_stage"] == "ESCALADO_HUMANO"
+        and state["terminal_reason"] == "timeout_documentos"
+    )
+
+
+def test_simulate_idle_endpoint(client: TestClient) -> None:
+    customer = ann(client)
+    conv = client.post("/conversations", json={"phone": customer["phone"]}).json()[
+        "conversation_id"
+    ]
+    for msg in (
+        "Oi",
+        customer["cpf"],
+        "ontem às 18h bati sozinho no poste da Av. Paulista, 1000, ninguém se feriu, "
+        "amassou a frente",
+    ):
+        client.post(f"/conversations/{conv}/messages", json={"text": msg})
+    out = client.post(f"/conversations/{conv}/simulate-idle", json={"kind": "reminder"}).json()
+    assert (
+        out["state"]["claim_stage"] == "DOCUMENTOS"
+        and "ainda precisamos" in out["replies"][0]["text"]
+    )
+    out = client.post(f"/conversations/{conv}/simulate-idle", json={"kind": "timeout"}).json()
+    assert out["state"]["claim_stage"] == "ESCALADO_HUMANO"
+    assert (
+        client.post(f"/conversations/{conv}/simulate-idle", json={"kind": "x"}).status_code == 422
+    )

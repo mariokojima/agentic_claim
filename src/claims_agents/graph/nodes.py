@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any, Literal
 
 from claims_agents.agents.claim_notice.graph import build_claim_notice_graph
 from claims_agents.agents.claim_notice.state import NoticeGraphState
 from claims_agents.agents.documents.graph import build_documents_graph
 from claims_agents.agents.documents.state import DocumentsGraphState
+from claims_agents.agents.documents.subagents.checklist.nodes import pending_items
 from claims_agents.agents.guardrails.graph import build_guardrails_graph
 from claims_agents.agents.guardrails.state import GuardrailGraphState
 from claims_agents.agents.orchestrator.intent import IntentClassifier, IntentResult
@@ -91,8 +92,10 @@ class MainNodes:
             "turn_input_decision": None,
             "route": "guardrails_in",
             "paused": False,
-            "messages": [ChatMessage(role="user", text=text, attachments=files)],
         }
+        if inbound is not None and inbound.kind != "user":
+            return updates | self._timer(state, inbound.kind)
+        updates["messages"] = [ChatMessage(role="user", text=text, attachments=files)]
         if state.turns == 0:
             emit("flow_started", details="Nova conversa", data={"stage": state.claim_stage.value})
         suffix = f" (+{len(files)} anexo(s))" if files else ""
@@ -122,6 +125,9 @@ class MainNodes:
                     )
                 ],
             }
+        elif self._documents_expired(state):
+            # mensagem chegou após o prazo de complementação: segue o mesmo caminho do timeout
+            updates |= self._timer(state, "timeout")
         elif state.claim_stage.is_terminal:
             info = f" Protocolo: {state.protocol}." if state.protocol else ""
             text_closed = self.deps.messages.get(
@@ -132,6 +138,54 @@ class MainNodes:
                 "outbox": [OutboxMessage(text=text_closed, source="receive")],
             }
         return updates
+
+    # --- inatividade na etapa de Documentos (ADR-0004) -------------------------------------------
+
+    @staticmethod
+    def last_user_activity(state: GlobalState) -> datetime | None:
+        return next((m.ts for m in reversed(state.messages) if m.role == "user"), None)
+
+    def _documents_expired(self, state: GlobalState) -> bool:
+        if state.claim_stage != ClaimStage.DOCUMENTOS:
+            return False
+        last = self.last_user_activity(state)
+        limit = timedelta(minutes=self.deps.settings.documents.complement_timeout_minutes)
+        return last is not None and self.deps.now() - last > limit
+
+    def _timer(self, state: GlobalState, kind: str) -> dict[str, Any]:
+        """Disparos do verificador de inatividade: lembrete ou encaminhamento por timeout."""
+        waiting_docs = (
+            state.claim_stage == ClaimStage.DOCUMENTOS
+            and state.awaiting is not None
+            and state.awaiting.field == "documents"
+        )
+        if not waiting_docs:
+            emit("timer_ignored", status="completed", details=f"{kind}: nada pendente")
+            return {"route": "guardrails_out"}
+        settings = self.deps.settings.documents
+        if kind == "timeout":
+            emit(
+                "documents_timeout",
+                status="warning",
+                details=f"Sem documentos há mais de {settings.complement_timeout_minutes} min",
+            )
+            result = StageResult(
+                status="failed",
+                reason="Prazo de complementação de documentos expirado",
+                payload={"escalated_by": "timeout_documentos"},
+            )
+            return {"route": "transition", "last_result": result}
+        items = pending_items(state.documents.requirements, state.documents.received)
+        text = self.deps.messages.get(
+            "documents.reminder_timer", protocol=state.protocol, items="\n".join(items)
+        )
+        emit("reminder_sent", status="warning", details=f"Lembrete: {len(items)} pendência(s)")
+        documents = state.documents.model_copy(update={"reminded_at": self.deps.now()})
+        return {
+            "route": "guardrails_out",
+            "documents": documents,
+            "outbox": [OutboxMessage(text=text, source="receive")],
+        }
 
     def _triage_expired(self, state: GlobalState) -> bool:
         """Triagem em andamento sem resposta do cliente além do timeout de inatividade."""

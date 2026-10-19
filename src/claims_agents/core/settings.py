@@ -45,7 +45,10 @@ class LLMSettings(BaseModel):
 
 
 class DocumentsSettings(BaseModel):
-    complement_timeout_hours: int = 72
+    # ADR-0004: sem envio de documentos, lembrete e depois encaminhamento a humano
+    reminder_minutes: int = 1440  # 24 h
+    complement_timeout_minutes: int = 4320  # 72 h
+    sweep_interval_seconds: int = 60  # frequência do verificador de inatividade (0 = desligado)
 
 
 class PauseSettings(BaseModel):

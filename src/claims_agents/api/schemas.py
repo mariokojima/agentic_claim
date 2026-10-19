@@ -1,6 +1,6 @@
 """Schemas HTTP da API."""
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -35,6 +35,10 @@ class TurnOut(BaseModel):
     state: ConversationState
     replies: list[ChatMessage]
     events: int
+
+
+class SimulateIdle(BaseModel):
+    kind: Literal["reminder", "timeout"]
 
 
 class PauseRequest(BaseModel):

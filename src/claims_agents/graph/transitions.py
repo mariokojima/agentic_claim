@@ -19,6 +19,10 @@ NEXT_ON_REJECTED: dict[ClaimStage, ClaimStage] = {
 }
 
 
+# mensagem ao cliente por motivo de escalonamento (messages.yaml)
+ESCALATION_MESSAGES = {"timeout_documentos": "transition.documents_timeout"}
+
+
 class TransitionOutcome(BaseModel):
     new_stage: ClaimStage
     reason: str
@@ -87,11 +91,12 @@ def decide_transition(
             terminal_reason=f"cancelado:{result.payload['cancelled_by']}",
         )
     if result.status == "failed" and result.payload.get("escalated_by"):
+        by = str(result.payload["escalated_by"])
         return TransitionOutcome(
             new_stage=ClaimStage.ESCALADO_HUMANO,
             reason=result.reason,
             next_node="guardrails_out",
-            message_key="transition.escalated",
+            message_key=ESCALATION_MESSAGES.get(by, "transition.escalated"),
             terminal_reason=str(result.payload["escalated_by"]),
         )
     if result.status == "failed":

@@ -39,7 +39,9 @@ def build_graph(
     g.add_node("send", delay(n.send))
 
     g.add_edge(START, "receive")
-    g.add_conditional_edges("receive", route_by_state, ["guardrails_in", "guardrails_out"])
+    g.add_conditional_edges(
+        "receive", route_by_state, ["guardrails_in", "guardrails_out", "transition"]
+    )
     g.add_conditional_edges("guardrails_in", route_by_state, ["orchestrator", "transition"])
     g.add_conditional_edges(
         "orchestrator", route_by_state, [*SPECIALISTS, "transition", "guardrails_out"]
