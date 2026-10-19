@@ -23,7 +23,8 @@ from claims_agents.api.schemas import (
     TurnOut,
 )
 from claims_agents.api.service import ChatService, ConversationNotFound, UploadNotFound
-from claims_agents.core.logging import configure_logging
+from claims_agents.core.llm import build_llm_client, load_llm_config
+from claims_agents.core.logging import configure_logging, get_logger
 from claims_agents.core.settings import PROJECT_ROOT, Settings, get_settings
 from claims_agents.domain import DocumentType
 from claims_agents.graph.build_graph import build_graph
@@ -36,6 +37,8 @@ from claims_agents.observability.store import EventStore
 from claims_agents.state import GlobalState
 from claims_agents.tools.mocks.db import DomainDB, load_fixtures
 from claims_agents.tools.registry import build_registry
+
+log = get_logger(__name__)
 
 
 def ensure_seeded(settings: Settings) -> None:
@@ -67,9 +70,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         hub, bus, control = ChatHub(), EventBus(), PauseControl()
         store = EventStore(settings.events_db_path)
         registry = build_registry(settings, delivery=hub.deliver, observer=tool_observer)
+        llm = build_llm_client() if settings.llm.enabled else None
+        llm_cfg = load_llm_config()
+        log.info(
+            "llm",
+            extra={
+                "status": "ativo" if llm else "desligado (só regras)",
+                "provider": llm_cfg.provider,
+                "model": llm_cfg.default.model,
+            },
+        )
         async with open_checkpointer(settings.checkpoints_db_path) as saver:
             graph = build_graph(
-                GraphDeps(registry=registry, settings=settings, control=control), saver
+                GraphDeps(registry=registry, settings=settings, control=control, llm=llm), saver
             )
             app.state.hub = hub
             app.state.service = ChatService(settings, graph, store, bus, control)

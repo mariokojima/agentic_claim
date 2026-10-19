@@ -13,5 +13,6 @@ No chat, anexe com o tipo "Detectar pelo nome do arquivo" para enviar todos de u
 | `19810523211` | João Lima Ficticio | AUTO-0010-01 | FIC9J01 |
 | `47740236047` | Karina Moura Mock | AUTO-0011-01 | MCK1K23 |
 | `79031020281` | Lucas Nunes Exemplo | AUTO-0012-01 | EXP2L34 |
+| `36270398908` | Marina Okada Recente | AUTO-0013-01 | REC3M45 |
 
 `_invalidos/`: arquivos para testar a complementação (ver LEIA-ME.txt).

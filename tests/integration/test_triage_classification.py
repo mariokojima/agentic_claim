@@ -45,15 +45,24 @@ async def test_asks_what_happened_before_mentioning_claim(
     assert "o que aconteceu" in replies(r) and "aviso" not in replies(r).lower()
     # decisão em turno posterior à identificação mantém a apólice escolhida (regressão)
     r = await run_turn(graph, "t1", text("Bati o carro"))
+    # elegível: pergunta pelos envolvidos antes de concluir a Triagem
+    assert r.state.claim_stage == ClaimStage.TRIAGEM and r.state.awaiting is not None
+    assert r.state.awaiting.field == "parties" and "outro veículo" in replies(r)
+    r = await run_turn(graph, "t1", text("não, só eu e ninguém se feriu"))
     assert r.state.claim_stage == ClaimStage.AVISO
     assert r.state.customer is not None and r.state.customer.policy_number == "AUTO-0001-01"
     assert "colisão" in replies(r) and "quando aconteceu" in replies(r)
+    assert "o que aconteceu (ex" not in replies(r)  # a Triagem já entendeu o ocorrido
     r = await run_turn(graph, "t1", text("foi ontem às 18h na Av. Paulista, 1000"))
     assert r.state.claim_stage == ClaimStage.DOCUMENTOS and r.state.protocol
 
 
 async def test_initial_message_is_reused(graph: Graph, happy_customer: Customer) -> None:
-    await run_turn(graph, "t2", text("Oi, bati o carro ontem às 9h na Av. Brasil, 200"))
+    await run_turn(
+        graph,
+        "t2",
+        text("Oi, bati o carro sozinho ontem às 9h na Av. Brasil, 200, ninguém se feriu"),
+    )
     r = await run_turn(graph, "t2", text(happy_customer.cpf))
     assert r.state.claim_stage == ClaimStage.DOCUMENTOS  # nada a perguntar: aviso já registrado
     assert "Av Brasil, 200" in replies(r)
@@ -108,8 +117,10 @@ async def test_injuries_raise_urgency(graph: Graph, happy_customer: Customer) ->
     await run_turn(graph, "t4", text("Oi"))
     await run_turn(graph, "t4", text(happy_customer.cpf))
     r = await run_turn(graph, "t4", text("Bati o carro e tem um ferido"))
-    assert "SAMU (192)" in replies(r)
-    assert r.state.triage.outcome["urgency"] == "alta"
+    assert replies(r) == "Havia outro veículo ou pessoa envolvida no ocorrido?"  # só o que falta
+    r = await run_turn(graph, "t4", text("não"))
+    assert "SAMU (192)" in replies(r) and r.state.claim_stage == ClaimStage.AVISO
+    assert r.state.triage.outcome["has_injuries"] is True
 
 
 async def test_customer_without_policy_is_not_asked(graph: Graph, fixtures: Any) -> None:

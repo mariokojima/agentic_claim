@@ -71,6 +71,13 @@ stages:
             - "(?i)\\b(por\\s+ser|por\\s+se\\s+tratar\\s+de)\\s+(mulher|negr[oa]|nordestin[oa]|idos[oa]|estrangeir[oa]|imigrante|pobre|deficiente)\\b"
   corporate:
     enabled: true
+    # Regras com o contexto do segurado, avaliadas na checagem ao fim da Triagem (ADR-0015).
+    context_rules:
+      recent_policy:
+        enabled: true
+        action: escalate
+        max_days: 7
+        reason: "Evento ocorrido poucos dias após o início da vigência da apólice"
     input:
       rules:
         fraud_signals:

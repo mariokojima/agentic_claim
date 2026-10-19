@@ -263,5 +263,26 @@
       "year": 2024
     },
     "_note": "vigente (cenários de fraude/injection)"
+  },
+  {
+    "number": "AUTO-0013-01",
+    "customer_id": "CUST-0013",
+    "status": "ATIVA",
+    "start_date": "2026-10-10",
+    "end_date": "2027-10-09",
+    "coverages": [
+      "COLISAO",
+      "ROUBO_FURTO",
+      "INCENDIO",
+      "TERCEIROS",
+      "VIDROS",
+      "ASSISTENCIA_24H"
+    ],
+    "vehicle": {
+      "plate": "REC3M45",
+      "model": "Pulse 1.0",
+      "year": 2025
+    },
+    "_note": "apólice recém-contratada (checagem corporativa)"
   }
 ]

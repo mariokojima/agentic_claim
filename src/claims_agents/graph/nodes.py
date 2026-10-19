@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
+from datetime import timedelta
 from typing import Any, Literal
 
 from claims_agents.agents.claim_notice.graph import build_claim_notice_graph
@@ -16,6 +17,8 @@ from claims_agents.agents.orchestrator.routing_policy import route
 from claims_agents.agents.triage.graph import build_triage_graph
 from claims_agents.agents.triage.state import TriageGraphState
 from claims_agents.core.errors import ToolError
+from claims_agents.core.llm import LLMError
+from claims_agents.core.prompts import load_prompt
 from claims_agents.domain import ClaimStage
 from claims_agents.graph.demo import demo_wrapper
 from claims_agents.graph.deps import GraphDeps
@@ -30,6 +33,7 @@ from claims_agents.state import (
     GuardrailVerdict,
     OutboxMessage,
     StageResult,
+    TriageState,
 )
 from claims_agents.tools.schemas import SendWhatsappRequest
 
@@ -53,8 +57,9 @@ class MainNodes:
         attempts = deps.settings.triage.max_attempts_per_field
         self.guardrails = build_guardrails_graph(deps.guardrails_config)
         wrap = demo_wrapper(deps.settings.demo.subagent_delay_ms)
+        llm = deps.llm if deps.settings.triage.llm_fallback else None
         self.triage_graph = build_triage_graph(
-            reg.get_customer_data, deps.triage_rules, msgs, attempts, wrap
+            reg.get_customer_data, deps.triage_rules, msgs, attempts, wrap, llm=llm
         )
         self.notice_graph = build_claim_notice_graph(reg.open_claim, msgs, attempts, wrap)
         self.documents_graph = build_documents_graph(
@@ -90,6 +95,22 @@ class MainNodes:
                     OutboxMessage(text=self.deps.settings.pause.handoff_message, source="receive")
                 ],
             }
+        elif self._triage_expired(state):
+            minutes = self.deps.settings.triage.inactivity_timeout_minutes
+            emit(
+                "inactivity_timeout",
+                status="warning",
+                details=f"Sem resposta há mais de {minutes} min: Triagem reiniciada",
+            )
+            updates |= {
+                "triage": TriageState(),
+                "awaiting": None,
+                "outbox": [
+                    OutboxMessage(
+                        text=self.deps.messages.get("triage.session_expired"), source="receive"
+                    )
+                ],
+            }
         elif state.claim_stage.is_terminal:
             info = f" Protocolo: {state.protocol}." if state.protocol else ""
             text_closed = self.deps.messages.get(
@@ -101,6 +122,16 @@ class MainNodes:
             }
         return updates
 
+    def _triage_expired(self, state: GlobalState) -> bool:
+        """Triagem em andamento sem resposta do cliente além do timeout de inatividade."""
+        if state.claim_stage != ClaimStage.TRIAGEM or state.triage.step == "start":
+            return False
+        last = state.messages[-1].ts if state.messages else None
+        if last is None:
+            return False
+        limit = timedelta(minutes=self.deps.settings.triage.inactivity_timeout_minutes)
+        return self.deps.now() - last > limit
+
     # --- guardrails -----------------------------------------------------------------------------
 
     async def _check(
@@ -109,6 +140,7 @@ class MainNodes:
         text: str,
         state: GlobalState,
         attachments_text: str = "",
+        extra_context: dict[str, Any] | None = None,
     ) -> GuardrailVerdict:
         out = await self.guardrails.ainvoke(
             GuardrailGraphState(
@@ -118,7 +150,8 @@ class MainNodes:
                     "stage": state.claim_stage.value,
                     "conversation_id": state.conversation_id,
                     "attachments_text": attachments_text,
-                },
+                }
+                | (extra_context or {}),
             )
         )
         return GuardrailVerdict.model_validate(out["verdict"])
@@ -179,9 +212,8 @@ class MainNodes:
 
     # --- especialistas --------------------------------------------------------------------------
 
-    @staticmethod
-    def _apply(
-        state: GlobalState, stage: ClaimStage, source: str, out: dict[str, Any]
+    async def _apply(
+        self, state: GlobalState, stage: ClaimStage, source: str, out: dict[str, Any]
     ) -> dict[str, Any]:
         result = (
             StageResult.model_validate(out["result"])
@@ -192,10 +224,8 @@ class MainNodes:
         if result.status == "needs_input":
             updates["awaiting"] = Awaiting(stage=stage.value, field=out.get("awaiting_field") or "")
         if result.user_message:
-            updates["outbox"] = [
-                *state.outbox,
-                OutboxMessage(text=result.user_message, source=source),
-            ]
+            text = await self._rewrite(result.user_message)
+            updates["outbox"] = [*state.outbox, OutboxMessage(text=text, source=source)]
         emit(
             "stage_result",
             agent=source,
@@ -204,6 +234,21 @@ class MainNodes:
             data={"status": result.status, "payload": result.payload},
         )
         return updates
+
+    async def _rewrite(self, text: str) -> str:
+        """Redação pelo LLM (llm.rewrite_messages). Falhou → mantém o texto original."""
+        if not (self.deps.settings.llm.rewrite_messages and self.deps.llm):
+            return text
+        prompt = load_prompt("common/writer")
+        try:
+            resp = await self.deps.llm.chat(
+                [{"role": "system", "content": prompt.text}, {"role": "user", "content": text}],
+                role="writer",
+                prompt_version=prompt.ref,
+            )
+        except LLMError:
+            return text
+        return resp.content.strip() or text
 
     async def triage(self, state: GlobalState) -> dict[str, Any]:
         out = await self.triage_graph.ainvoke(
@@ -214,22 +259,66 @@ class MainNodes:
                 customer=state.customer,  # identificado em turno anterior
             )
         )
-        updates = self._apply(state, ClaimStage.TRIAGEM, "triage", out)
+        updates = await self._apply(state, ClaimStage.TRIAGEM, "triage", out)
         updates["triage"] = out["sub"]
         if out.get("customer") is not None:
             updates["customer"] = CustomerRef.model_validate(out["customer"])
+        result: StageResult = updates["last_result"]
+        if result.status == "completed":
+            updates |= await self._corporate_check(state, out, result)
         return updates
+
+    async def _corporate_check(
+        self, state: GlobalState, out: dict[str, Any], result: StageResult
+    ) -> dict[str, Any]:
+        """Reexecuta os guardrails ao fim da Triagem com o contexto do segurado (apólice/evento)."""
+        sub = TriageState.model_validate(out["sub"])
+        policy_number = result.payload.get("policy_number")
+        policy: dict[str, Any] = next(
+            (p for p in sub.outcome.get("policies", []) if p["number"] == policy_number), {}
+        )
+        event_date = result.payload.get("event_date") or self.deps.now().date().isoformat()
+        verdict = await self._check(
+            "input",
+            str(result.payload.get("event_description", "")),
+            state,
+            extra_context={
+                "checkpoint": "fim_triagem",
+                "policy_start_date": policy.get("start_date"),
+                "event_date": event_date,
+            },
+        )
+        emit(
+            "corporate_check",
+            status="completed" if verdict.decision in ("allow", "sanitize") else "warning",
+            details=f"Fim da Triagem: {verdict.decision} — {verdict.reason}",
+            data={"decision": verdict.decision},
+        )
+        if verdict.decision in ("allow", "sanitize"):
+            return {"guardrail_verdicts": [verdict]}
+        escalated = StageResult(
+            status="failed",
+            reason=f"Checagem corporativa: {verdict.reason}",
+            payload={"escalated_by": "guardrail_corporate"},
+        )
+        # descarta a mensagem "vou registrar o aviso": o caso segue para análise humana
+        return {"guardrail_verdicts": [verdict], "last_result": escalated, "outbox": state.outbox}
 
     async def claim_notice(self, state: GlobalState) -> dict[str, Any]:
         out = await self.notice_graph.ainvoke(
             NoticeGraphState(
                 text=state.inbound.text if state.inbound else "",
                 prior_text=str(state.triage.outcome.get("event_description", "")),
+                parties={
+                    k: bool(state.triage.outcome.get(k))
+                    for k in ("has_third_parties", "has_injuries")
+                },
+                known_what="colisão" if state.triage.outcome.get("event_type") == "COLISAO" else "",
                 customer=state.customer,
                 sub=state.notice,
             )
         )
-        updates = self._apply(state, ClaimStage.AVISO, "claim_notice", out)
+        updates = await self._apply(state, ClaimStage.AVISO, "claim_notice", out)
         updates["notice"] = out["sub"]
         if out.get("protocol"):
             updates["protocol"] = out["protocol"]
@@ -245,7 +334,7 @@ class MainNodes:
                 sub=state.documents,
             )
         )
-        updates = self._apply(state, ClaimStage.DOCUMENTOS, "documents", out)
+        updates = await self._apply(state, ClaimStage.DOCUMENTOS, "documents", out)
         updates["documents"] = out["sub"]
         return updates
 

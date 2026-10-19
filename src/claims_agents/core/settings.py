@@ -33,6 +33,14 @@ class OrchestratorSettings(BaseModel):
 class TriageSettings(BaseModel):
     max_attempts_per_field: int = 3
     inactivity_timeout_minutes: int = 60
+    llm_fallback: bool = True  # LLM quando as regras não entendem o relato
+
+
+class LLMSettings(BaseModel):
+    """Uso do LLM (modelo/provedor em configs/models.yaml). Sem chave, o sistema usa só regras."""
+
+    enabled: bool = True
+    rewrite_messages: bool = False  # redação das mensagens ao cliente pelo LLM
 
 
 class DocumentsSettings(BaseModel):
@@ -85,6 +93,7 @@ class Settings(BaseSettings):
     metrics: MetricsSettings = Field(default_factory=MetricsSettings)
     tools: ToolsSettings = Field(default_factory=ToolsSettings)
     demo: DemoSettings = Field(default_factory=DemoSettings)
+    llm: LLMSettings = Field(default_factory=LLMSettings)
 
     @classmethod
     def settings_customise_sources(

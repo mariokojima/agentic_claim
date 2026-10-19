@@ -41,7 +41,12 @@ async def test_happy_path_reaches_concluido(
     graph: Graph, happy_customer: Customer, tmp_path: Path
 ) -> None:
     conv = "conv-happy"
-    r1 = await run_turn(graph, conv, text("Oi, bati o carro"), customer_phone=happy_customer.phone)
+    r1 = await run_turn(
+        graph,
+        conv,
+        text("Oi, bati o carro sozinho, ninguém se feriu"),
+        customer_phone=happy_customer.phone,
+    )
     assert r1.state.claim_stage == ClaimStage.TRIAGEM
     assert r1.state.awaiting is not None and r1.state.awaiting.field == "cpf"
     assert "flow_started" in kinds(r1.events)
@@ -86,7 +91,11 @@ async def test_documents_complement_loop(
     conv = "conv-docs"
     await run_turn(graph, conv, text("Oi"))
     await run_turn(graph, conv, text(happy_customer.cpf))
-    await run_turn(graph, conv, text("Ontem bati o carro no estacionamento do mercado"))
+    await run_turn(
+        graph,
+        conv,
+        text("Ontem bati o carro sozinho no estacionamento do mercado, ninguém se feriu"),
+    )
     partial = [
         attachment(tmp_path, DocumentType.CNH, {"cpf": happy_customer.cpf}),
         attachment(tmp_path, DocumentType.CRLV, {"plate": "ERR0R00"}),
@@ -145,7 +154,7 @@ async def test_pause_returns_handoff_without_running_agents(
     graph: Graph, deps: GraphDeps, happy_customer: Customer
 ) -> None:
     conv = "conv-pause"
-    await run_turn(graph, conv, text("Oi, bati o carro"))
+    await run_turn(graph, conv, text("Oi, bati o carro sozinho, ninguém se feriu"))
     deps.control.set(True, conv)
     r = await run_turn(graph, conv, text(happy_customer.cpf))
     assert r.state.claim_stage == ClaimStage.TRIAGEM

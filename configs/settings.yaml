@@ -6,7 +6,12 @@ orchestrator:
   intent_llm_enabled: false
 triage:
   max_attempts_per_field: 3
-  inactivity_timeout_minutes: 60
+  inactivity_timeout_minutes: 60   # sem resposta por mais que isso, a Triagem recomeça
+  llm_fallback: true               # LLM quando as regras não entendem o relato
+# LLM via gateway no formato OpenAI (configs/models.yaml). Sem chave no .env → só regras.
+llm:
+  enabled: true
+  rewrite_messages: false          # true: o LLM redige as mensagens (sempre passando pelo guardrail de saída)
 documents:
   complement_timeout_hours: 72
 pause:

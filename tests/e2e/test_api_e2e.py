@@ -75,7 +75,7 @@ def test_full_conversation_over_websocket(client: TestClient) -> None:
         with client.websocket_connect(f"/ws/chat/{conv}") as ws:
             assert ws.receive_json()["type"] == "history"
 
-            replies, state = say(ws, "Oi, sofri uma batida")
+            replies, state = say(ws, "Oi, sofri uma batida sozinho, ninguém se feriu")
             assert state["claim_stage"] == "TRIAGEM" and "CPF" in replies[0]
 
             replies, state = say(ws, customer["cpf"])
@@ -127,7 +127,10 @@ def test_rest_messages_and_pause(client: TestClient) -> None:
     conv = client.post("/conversations", json={"phone": customer["phone"]}).json()[
         "conversation_id"
     ]
-    out = client.post(f"/conversations/{conv}/messages", json={"text": "Oi, bati o carro"}).json()
+    out = client.post(
+        f"/conversations/{conv}/messages",
+        json={"text": "Oi, bati o carro sozinho, ninguém se feriu"},
+    ).json()
     assert out["state"]["awaiting"]["field"] == "cpf"
 
     assert client.post("/control/pause", json={"paused": True}).json()["global_paused"] is True

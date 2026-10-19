@@ -6,6 +6,7 @@ entram aqui, executando apenas quando nenhuma regra determinística decidiu `blo
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Any, Literal
 
 from claims_agents.agents.guardrails.rules import (
@@ -31,6 +32,9 @@ def stage_enabled(config: dict[str, Any], stage: StageName) -> bool:
 def build_stage(stage: StageName, config: dict[str, Any]) -> NodeFn[GuardrailGraphState]:
     enabled = stage_enabled(config, stage)
     rules = {d: load_rules(config, stage, d) for d in ("input", "output")}
+    context_rules: dict[str, Any] = (
+        config.get("stages", {}).get(stage, {}).get("context_rules") or {}
+    )
 
     def node(state: GuardrailGraphState) -> dict[str, Any]:
         if not enabled:
@@ -42,6 +46,9 @@ def build_stage(stage: StageName, config: dict[str, Any]) -> NodeFn[GuardrailGra
         extra = state.context.get("attachments_text")  # injeção embutida em anexos
         scanned = f"{text}\n{extra}" if extra and state.direction == "input" else text
         hits = evaluate(rules[state.direction], scanned)
+        context_check = _context_rules(context_rules, state.context)
+        if context_check is not None and not hits:
+            return {stage: context_check.model_copy(update={"stage": stage})}
         if not hits:
             return {
                 stage: GuardrailCheck(
@@ -61,3 +68,19 @@ def build_stage(stage: StageName, config: dict[str, Any]) -> NodeFn[GuardrailGra
 
     node.__name__ = stage
     return node
+
+
+def _context_rules(rules: dict[str, Any], context: dict[str, Any]) -> GuardrailCheck | None:
+    """Regras que dependem do contexto do segurado (ex.: apólice muito recente)."""
+    recent = rules.get("recent_policy") or {}
+    start, event = context.get("policy_start_date"), context.get("event_date")
+    if recent.get("enabled", False) and start and event:
+        days = (date.fromisoformat(str(event)) - date.fromisoformat(str(start))).days
+        if 0 <= days <= int(recent.get("max_days", 7)):
+            return GuardrailCheck(
+                stage="corporate",
+                decision=recent.get("action", "escalate"),
+                reason=f"[recent_policy] {recent.get('reason', '')} ({days} dia(s))",
+                rule="recent_policy",
+            )
+    return None

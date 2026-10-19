@@ -82,5 +82,12 @@
     "cpf": "79031020281",
     "phone": "+5511900000012",
     "email": "lucas.12@exemplo.invalid"
+  },
+  {
+    "id": "CUST-0013",
+    "name": "Marina Okada Recente",
+    "cpf": "36270398908",
+    "phone": "+5511900000013",
+    "email": "marina.13@exemplo.invalid"
   }
 ]

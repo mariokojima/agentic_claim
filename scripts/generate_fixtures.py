@@ -86,6 +86,11 @@ PEOPLE = [
         [("ATIVA", "2026-07-01", "2027-06-30", ALL, "EXP2L34", "Renegade 1.3", 2024)],
         "vigente (cenários de fraude/injection)",
     ),
+    (
+        "Marina Okada Recente",
+        [("ATIVA", "2026-10-10", "2027-10-09", ALL, "REC3M45", "Pulse 1.0", 2025)],
+        "apólice recém-contratada (checagem corporativa)",
+    ),
 ]
 
 
