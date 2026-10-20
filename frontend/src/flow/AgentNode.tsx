@@ -2,7 +2,7 @@ import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import type { NodeState } from "./status";
 import { STATUS_LABELS } from "../labels";
 
-export type AgentNodeData = { label: string; state?: NodeState; kind?: "specialist" | "core" | "subagent" };
+export type AgentNodeData = { label: string; state?: NodeState; kind?: "specialist" | "core" | "subagent" | "spacer" };
 export type AgentNodeType = Node<AgentNodeData, "agent">;
 
 export function AgentNode({ data }: NodeProps<AgentNodeType>) {

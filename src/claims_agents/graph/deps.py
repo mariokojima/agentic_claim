@@ -25,6 +25,7 @@ class GraphDeps:
     checklist: dict[str, Any] = field(default_factory=lambda: load_config("documents_checklist"))
     orchestrator_config: dict[str, Any] = field(default_factory=lambda: load_config("orchestrator"))
     claim_types: dict[str, Any] = field(default_factory=lambda: load_config("claim_types"))
+    policy_info_config: dict[str, Any] = field(default_factory=lambda: load_config("policy_info"))
     # LLM injetado explicitamente (None = só regras; testes usam FakeLLMClient)
     llm: LLMClient | None = None
     now: Callable[[], datetime] = field(default=lambda: datetime.now(UTC))

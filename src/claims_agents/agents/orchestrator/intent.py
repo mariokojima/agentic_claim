@@ -18,6 +18,7 @@ Intent = Literal[
     "continuar_etapa",
     "corrigir_dado_anterior",
     "duvida",
+    "consulta_apolice",
     "status",
     "cancelar",
     "falar_com_humano",

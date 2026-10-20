@@ -161,7 +161,7 @@ async def test_status_and_doubt_answer_and_resume(
     assert "partes do veículo" in msg  # repete a pergunta pendente
     assert r.state.claim_stage == ClaimStage.AVISO
     r = await run_turn(graph, "s1", text("tem franquia?"))
-    assert "franquia" in replies(r) and replies(r).count("Vamos continuar:") == 1
+    assert "franquia" in replies(r).lower() and replies(r).count("Vamos continuar:") == 1
     r = await run_turn(graph, "s1", text("ontem às 18h na Av. Paulista, 1000; amassou a frente"))
     assert r.state.claim_stage == ClaimStage.DOCUMENTOS  # fluxo segue normalmente
 

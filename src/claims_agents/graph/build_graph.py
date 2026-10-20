@@ -34,6 +34,7 @@ def build_graph(
     g.add_node("triage", delay(n.triage))
     g.add_node("claim_notice", delay(n.claim_notice))
     g.add_node("documents", delay(n.documents))
+    g.add_node("policy_info", delay(n.policy_info))
     g.add_node("transition", delay(n.transition))
     g.add_node("guardrails_out", delay(n.guardrails_out))
     g.add_node("send", delay(n.send))
@@ -44,11 +45,14 @@ def build_graph(
     )
     g.add_conditional_edges("guardrails_in", route_by_state, ["orchestrator", "transition"])
     g.add_conditional_edges(
-        "orchestrator", route_by_state, [*SPECIALISTS, "transition", "guardrails_out"]
+        "orchestrator",
+        route_by_state,
+        [*SPECIALISTS, "policy_info", "transition", "guardrails_out"],
     )
     for specialist in SPECIALISTS:
         g.add_edge(specialist, "transition")
     g.add_conditional_edges("transition", route_by_state, ["orchestrator", "guardrails_out"])
+    g.add_edge("policy_info", "guardrails_out")  # consultas não mudam a etapa do sinistro
     g.add_edge("guardrails_out", "send")
     g.add_edge("send", END)
     return g.compile(checkpointer=checkpointer)

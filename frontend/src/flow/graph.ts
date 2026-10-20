@@ -9,6 +9,7 @@ const pos: Record<string, [number, number, "specialist" | "core"]> = {
   triage: [500, 0, "specialist"],
   claim_notice: [500, 120, "specialist"],
   documents: [500, 240, "specialist"],
+  policy_info: [500, 360, "specialist"],
   transition: [240, 350, "core"],
   guardrails_out: [0, 350, "core"],
   send: [0, 165, "core"],
@@ -74,9 +75,23 @@ export const baseEdges: Edge[] = [
   e("triage", "transition", "b", "t"),
   e("claim_notice", "transition", "b", "t"),
   e("documents", "transition", "b", "t"),
+  e("orchestrator", "policy_info", "r", "l"),
+  e("policy_info", "guardrails_out", "b", "t", { label: "resposta", className: "edge-alt" }),
   e("transition", "orchestrator", "ts", "bt", { label: "próxima etapa", className: "edge-loop" }),
   e("transition", "guardrails_out", "r", "l"),
   e("guardrails_out", "send", "ts", "bt"),
 ];
 
-export const baseNodes: AgentNodeType[] = [...coreNodes, ...subagentNodes];
+// Nó invisível que estende a área do grafo para baixo: o ajuste de zoom reserva espaço para os
+// controles (canto inferior direito) sem sobrepor caixas.
+const spacer: AgentNodeType = {
+  id: "_spacer",
+  type: "agent",
+  position: { x: 1150, y: 470 },
+  data: { label: "", kind: "spacer" },
+  draggable: false,
+  selectable: false,
+  style: { opacity: 0, pointerEvents: "none" },
+};
+
+export const baseNodes: AgentNodeType[] = [...coreNodes, ...subagentNodes, spacer];

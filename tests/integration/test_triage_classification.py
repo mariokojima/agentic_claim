@@ -84,7 +84,7 @@ async def test_initial_message_is_reused(graph: Graph, happy_customer: Customer)
         (
             "quero a segunda via do boleto",
             "rejected:event_type_NAO_SINISTRO",
-            "dedicado à abertura",
+            "dedicado a sinistros",
         ),
     ],
 )

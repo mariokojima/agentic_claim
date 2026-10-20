@@ -98,7 +98,7 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="logo">
-          <span className="logo-mark">◭</span> <b>AGENT</b>FLOW
+          <span className="logo-mark">◭</span> <b>Pipeline Agêntica de Sinistro</b>
         </div>
         <div className="topbar-sub">PoC — Abertura de sinistro (dados sintéticos)</div>
       </header>

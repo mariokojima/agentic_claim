@@ -134,3 +134,4 @@ class GlobalState(BaseModel):
     input_blocks: int = 0  # mensagens recusadas pelo guardrail de entrada (ADR-0013)
     pending_question: str | None = None  # última pergunta feita ao cliente (para retomar)
     corrections: list[str] = Field(default_factory=list)  # correções informadas (ADR-0010)
+    policy_query: str | None = None  # consulta guardada enquanto o CPF é pedido (ADR-0019)

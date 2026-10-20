@@ -16,8 +16,18 @@ intents:
     - "(?i)\\b(qual\\s+(é\\s+)?(o\\s+)?(meu\\s+)?(n[uú]mero\\s+(do|de)\\s+)?protocolo|status\\s+do\\s+(meu\\s+)?(sinistro|aviso|pedido))\\b"
   corrigir_dado_anterior:
     - "(?i)\\b(corrig\\w*|me\\s+enganei|errei|digitei\\s+errado|informei\\s+errado|na\\s+verdade\\s+(foi|era|é))\\b"
+  # consultas e dúvidas são respondidas pelo especialista Consultas (ADR-0019)
+  consulta_apolice:
+    - "(?i)\\b(vig[eê]ncia|vencimento|quando\\s+(vence|venceu|expira)|renova\\w*|renovar)\\b"
+    - "(?i)\\b(minha|meu)\\s+(ap[oó]lice|seguro)\\s+(cobre|tem|inclui|abrange|est[aá]|vence)\\b"
+    - "(?i)\\b(quais|que)\\s+(s[aã]o\\s+)?(as\\s+)?(minhas\\s+)?coberturas\\b"
+    - "(?i)\\b(tenho|possuo)\\s+cobertura\\b"
+    - "(?i)\\b(o\\s+seguro|a\\s+ap[oó]lice)\\s+(me\\s+)?(cobre|paga|inclui)\\b"
+    - "(?i)\\b(n[uú]mero|dados)\\s+da\\s+(minha\\s+)?ap[oó]lice\\b"
   duvida:
-    - "(?i)\\b(como\\s+funciona|quanto\\s+(tempo|custa|demora|vou\\s+pagar)|franquia|qual\\s+(o\\s+)?prazo|preciso\\s+pagar|o\\s+que\\s+(é|significa)|carro\\s+reserva)\\b"
+    - "(?i)\\b(como\\s+funciona|quanto\\s+(tempo|custa|demora|vou\\s+pagar)|franquia|qual\\s+(o\\s+)?prazo|preciso\\s+pagar|carro\\s+reserva|vistoria|perda\\s+total|b[oô]nus)\\b"
+    - "(?i)\\bo\\s+que\\s+(é|e|significa)\\s+(um\\s+|uma\\s+|a\\s+|o\\s+)?(sinistro|ap[oó]lice|vig[eê]ncia|franquia|cobertura|casco|assist[eê]ncia|aviso)\\b"
+    - "(?i)\\b(quais|que)\\s+documentos\\b"
 
 # Respostas a desvios sem custo de LLM (as do LLM usam as mesmas mensagens)
 llm:

@@ -6,6 +6,7 @@ export const AGENT_LABELS: Record<string, string> = {
   triage: "Triagem",
   claim_notice: "Aviso de Sinistro",
   documents: "Documentos",
+  policy_info: "Consultas",
   transition: "Transição de etapa",
   guardrails_out: "Guardrails (saída)",
   send: "Envio WhatsApp",
@@ -14,6 +15,11 @@ export const AGENT_LABELS: Record<string, string> = {
 
 /** Subagentes de cada especialista, na ordem em que executam (ids = nós dos subgrafos). */
 export const SUBAGENTS: Record<string, { id: string; label: string }[]> = {
+  policy_info: [
+    { id: "query_classification", label: "Classificação da pergunta" },
+    { id: "customer_lookup", label: "Identificação do segurado" },
+    { id: "answer", label: "Resposta" },
+  ],
   triage: [
     { id: "customer_validation", label: "Validação do segurado" },
     { id: "event_classification", label: "Classificação do ocorrido" },
@@ -58,6 +64,10 @@ export const EVENT_LABELS: Record<string, string> = {
   route: "Roteamento",
   intent_classified: "Intenção classificada",
   correction_recorded: "Correção registrada",
+  query_classified: "Pergunta classificada",
+  policies_loaded: "Apólices consultadas",
+  query_answered: "Consulta respondida",
+  cpf_requested: "CPF solicitado",
   reminder_sent: "Lembrete de documentos",
   documents_timeout: "Prazo de documentos expirado",
   timer_ignored: "Verificação de inatividade",

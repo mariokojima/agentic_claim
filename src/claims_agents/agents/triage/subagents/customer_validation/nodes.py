@@ -33,7 +33,13 @@ def build(
 ) -> NodeFn[TriageGraphState]:
     async def customer_validation(state: TriageGraphState) -> dict[str, Any]:
         sub = state.sub.model_copy(deep=True)
-        if sub.step == "start":
+        known_cpf = state.customer.cpf if state.customer and state.customer.cpf else None
+        if sub.step == "start" and known_cpf:
+            # segurado já identificado nesta conversa (ex.: numa consulta): não pede o CPF de novo
+            sub.outcome["initial_text"] = state.text
+        elif sub.step == "await_cpf" and known_cpf and not extract_cpf(state.text).valid:
+            sub.outcome["initial_text"] = state.text
+        if sub.step == "start" and not known_cpf:
             sub.step = "await_cpf"
             # relato espontâneo da 1ª mensagem (ex.: "Oi, bati o carro"), usado na classificação
             sub.outcome["initial_text"] = state.text
@@ -48,6 +54,8 @@ def build(
             }
 
         extraction = extract_cpf(state.text)
+        if not extraction.valid and known_cpf:
+            extraction = CpfExtraction(cpf=known_cpf, valid=True)
         if not extraction.valid or extraction.cpf is None:
             attempts = sub.attempts.get("cpf", 0) + 1
             sub.attempts["cpf"] = attempts

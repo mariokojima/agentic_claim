@@ -67,7 +67,7 @@ rejection_messages:
   event_type_out_of_scope: "Este canal atende avisos de sinistro do veículo. Para este assunto, entre em contato com a central."
   # Orientação para ocorridos que não abrem aviso de sinistro
   event_type_ASSISTENCIA: "Para pane, guincho, pneu ou bateria, acione a Assistência 24h pelo 0800 000 0002 (fictício). Esse atendimento não abre um aviso de sinistro."
-  event_type_NAO_SINISTRO: "Este canal é dedicado à abertura de sinistros. Para dúvidas sobre apólice, pagamentos ou cadastro, fale com seu corretor ou acesse a área do cliente."
+  event_type_NAO_SINISTRO: "Este canal é dedicado a sinistros e consultas da apólice. Para pagamentos, boletos ou alteração de cadastro, fale com seu corretor ou acesse a área do cliente."
 
 urgency:
   high_if_any: [has_injuries]

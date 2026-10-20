@@ -344,6 +344,63 @@ scenarios:
       intents: [status]
       tools_required: *core_tools
 
+  # --- consultas (ADR-0019) ----------------------------------------------------------------
+  - id: query_expiration
+    title: Consulta de vencimento com pedido de CPF
+    category: consultas
+    suites: [smoke, full]
+    customer: Ana
+    turns: ["Oi, quando vence minha apólice?", "{cpf}"]
+    expected:
+      final_stage: TRIAGEM
+      specialists: [policy_info]
+      intents: [consulta_apolice]
+      tools_required: [get_customer_data]
+      tools_forbidden: [open_claim]
+
+  - id: query_then_claim
+    title: Consulta de cobertura seguida de sinistro (sem repetir o CPF)
+    category: consultas
+    suites: [full]
+    customer: João
+    turns:
+      - "Oi, minha apólice cobre vidros?"
+      - "{cpf}"
+      - "o para-brisa trincou ontem na rodovia SP-280"
+      - {text: "segue", documents: [crlv, foto_dano_1_traseira]}
+    expected:
+      final_stage: CONCLUIDO
+      specialists: [policy_info, triage, claim_notice, documents]
+      intents: [consulta_apolice]
+      tools_required: *core_tools
+
+  - id: faq_mid_flow
+    title: Dúvida geral no meio do Aviso e retomada
+    category: consultas
+    suites: [full]
+    customer: Bruno
+    turns:
+      - "Oi"
+      - "{cpf}"
+      - "bati sozinho num poste, ninguém se feriu"
+      - "o que é franquia?"
+      - "foi ontem às 18h na Av. Paulista, 1000; amassou a frente"
+    expected:
+      final_stage: DOCUMENTOS
+      intents: [duvida]
+      tools_required: [open_claim]
+
+  - id: hypothetical_question
+    title: Pergunta hipotética sobre cobertura não abre sinistro
+    category: consultas
+    suites: [full]
+    customer: Ana
+    turns: ["Oi", "{cpf}", "se eu emprestar o carro pro meu irmão e ele bater, o seguro cobre?"]
+    expected:
+      final_stage: TRIAGEM
+      intents: [consulta_apolice]
+      tools_forbidden: [open_claim]
+
   # --- falso positivo / LLM ----------------------------------------------------------------
   - id: false_positive_ignored_signal
     title: Relato legítimo com "ignorou" não pode ser bloqueado

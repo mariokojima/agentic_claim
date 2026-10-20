@@ -16,6 +16,8 @@ from claims_agents.agents.guardrails.graph import build_guardrails_graph
 from claims_agents.agents.guardrails.state import GuardrailGraphState
 from claims_agents.agents.orchestrator.intent import IntentClassifier, IntentResult
 from claims_agents.agents.orchestrator.routing_policy import route
+from claims_agents.agents.policy_info.graph import build_policy_info_graph
+from claims_agents.agents.policy_info.state import PolicyInfoGraphState
 from claims_agents.agents.triage.graph import build_triage_graph
 from claims_agents.agents.triage.state import TriageGraphState
 from claims_agents.core.errors import ToolError
@@ -81,6 +83,9 @@ class MainNodes:
         self.notice_graph = build_claim_notice_graph(
             reg.open_claim, msgs, attempts, wrap, llm=deps.llm
         )
+        self.policy_info_graph = build_policy_info_graph(
+            reg.get_customer_data, deps.policy_info_config, msgs, wrap, llm=deps.llm
+        )
         self.documents_graph = build_documents_graph(
             reg.store_files, reg.validate_document, deps.checklist, msgs, wrap
         )
@@ -125,6 +130,7 @@ class MainNodes:
             )
             updates |= {
                 "triage": TriageState(),
+                "customer": None,  # reconfirma a identificação do segurado
                 "awaiting": None,
                 "outbox": [
                     OutboxMessage(
@@ -284,7 +290,7 @@ class MainNodes:
             )
             emit(
                 "intent_classified",
-                status="completed" if intent.intent == "continuar_etapa" else "warning",
+                status="completed",  # desvio de roteiro é informativo, não alerta
                 details=f"{intent.intent} (via {intent.source})"
                 + (f": {intent.detail}" if intent.detail else ""),
                 data=intent.model_dump(),
@@ -323,7 +329,20 @@ class MainNodes:
                 payload={"cancelled_by": "cliente"},
             )
             return {"route": "transition", "last_result": result}
-        if intent.intent in ("status", "duvida", "fora_de_escopo"):
+        if intent.intent in ("duvida", "consulta_apolice") or (
+            state.awaiting is not None and state.awaiting.stage == "CONSULTA"
+        ):
+            emit(
+                "route",
+                details=f"→ policy_info: {intent.intent}",
+                data={
+                    "target": "policy_info",
+                    "stage": state.claim_stage.value,
+                    "intent": intent.intent,
+                },
+            )
+            return {"route": "policy_info"}
+        if intent.intent in ("status", "fora_de_escopo"):
             if intent.intent == "status":
                 info = f" Protocolo: {state.protocol}." if state.protocol else ""
                 text = msgs.get(
@@ -339,6 +358,54 @@ class MainNodes:
                 "outbox": [*state.outbox, OutboxMessage(text=text, source="orchestrator")],
             }
         return None
+
+    async def policy_info(self, state: GlobalState) -> dict[str, Any]:
+        """Especialista Consultas: apólice da persona e dúvidas gerais (ADR-0019).
+
+        Não muda a etapa do sinistro; ao responder, retoma a pergunta pendente do atendimento.
+        """
+        consulting = state.awaiting is not None and state.awaiting.stage == "CONSULTA"
+        out = await self.policy_info_graph.ainvoke(
+            PolicyInfoGraphState(
+                text=state.inbound.text if state.inbound else "",
+                pending_query=state.policy_query or "",
+                awaiting_cpf=consulting,
+                customer=state.customer,
+            )
+        )
+        msgs = self.deps.messages
+        updates: dict[str, Any] = {}
+        text = str(out.get("answer") or msgs.get("policy_info.unknown"))
+        if out.get("ask_cpf"):
+            updates |= {
+                "awaiting": Awaiting(stage="CONSULTA", field="cpf"),
+                "policy_query": state.policy_query or (state.inbound.text if state.inbound else ""),
+            }
+        else:
+            if consulting:
+                updates |= {"awaiting": None, "policy_query": None}
+            claim_pending = not consulting and state.awaiting is not None and state.pending_question
+            follow = (
+                f"{msgs.get('orchestrator.resume')} {state.pending_question}"
+                if claim_pending
+                else msgs.get("policy_info.anything_else")
+            )
+            text = f"{text}\n\n{follow}"
+        identified = out.get("identified")
+        if identified is not None and state.customer is None:
+            updates["customer"] = CustomerRef.model_validate(identified)
+        emit(
+            "stage_result",
+            agent="policy_info",
+            details=f"consulta respondida ({out.get('topic') or 'livre'}, via {out.get('source')})"
+            if not out.get("ask_cpf")
+            else "CPF solicitado para a consulta",
+            data={"topic": out.get("topic"), "source": out.get("source")},
+        )
+        return updates | {
+            "route": "guardrails_out",
+            "outbox": [*state.outbox, OutboxMessage(text=text, source="policy_info")],
+        }
 
     def _record_correction(self, state: GlobalState) -> dict[str, Any]:
         """ADR-0010: a correção é registrada e reconfirmada na etapa atual (sem regressão)."""
