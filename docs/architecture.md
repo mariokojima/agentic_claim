@@ -79,6 +79,7 @@ estourou → `ESCALADO_HUMANO`). Se `needs_input` ou terminal, segue para `guard
 | triage | customer_validation → event_classification → decision → parties (envolvidos) | `get_customer_data`, `send_whatsapp` (outbox) |
 | claim_notice | event_data_collection (quando/onde/o que/danos; LLM como fallback), coverage_assessment (pela apólice), registration | `open_claim`, `send_whatsapp` (outbox) |
 | documents | checklist, intake_storage, validation, complement (progresso, critério de saída e confirmação final) | `store_files`, `validate_document`, `send_whatsapp` (outbox) |
+| policy_info (Consultas, ADR-0019) | query_classification, customer_lookup, answer (apólice da persona, base de conhecimento ou LLM restrito) | `get_customer_data` |
 
 Os especialistas são máquinas de estado retomáveis: o progresso fica no sub-estado namespaced
 (`triage`, `notice`, `documents`) e cada turno avança até precisar de input (`needs_input`).

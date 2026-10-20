@@ -20,3 +20,4 @@
 | [0016](0016-aviso-completo-e-intencoes.md) | Aviso completo e intenções do Orquestrador | aceito |
 | [0017](0017-guardrails-llm-e-avaliacao.md) | Guardrails com LLM e desenho da avaliação | aceito |
 | [0018](0018-todos-os-sinistros-de-veiculo.md) | Todos os tipos de sinistro de veículo | aceito |
+| [0019](0019-especialista-consultas.md) | Especialista Consultas (apólice e dúvidas) | aceito |

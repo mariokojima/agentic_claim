@@ -34,6 +34,7 @@ Mensagem ─► Guardrails (entrada) ─► Orquestrador ─► Especialista da 
 | **Orquestrador** | Encaminha a mensagem ao especialista da etapa atual e trata desvios do roteiro: pedido de atendente, cancelamento, status, dúvidas, correções e assuntos fora do escopo. |
 | **Triagem** | Identifica o segurado (CPF), entende o que aconteceu e o tipo de sinistro (colisão, roubo/furto, incêndio, natureza, vidros — ou assistência/não-sinistro, que são orientados), checa a apólice e a cobertura do tipo pela data do evento, identifica envolvidos e feridos (colisão) e decide se o caso segue para o aviso. |
 | **Aviso de Sinistro** | Coleta quando, onde, o que aconteceu e os danos, faz a avaliação preliminar de cobertura pela apólice e registra o aviso, gerando o protocolo. |
+| **Consultas** | Responde perguntas sobre a apólice da persona (vigência, vencimento, renovação, coberturas) e dúvidas gerais de seguro (o que é sinistro, franquia…), em qualquer momento da conversa, e retoma o atendimento em andamento. |
 | **Documentos** | Pede os documentos do tipo de sinistro (ex.: colisão → CNH, CRLV, fotos e BO se houver terceiros; roubo → BO, CNH e CRLV); armazena e valida, informa o que já foi validado, solicita complementação (com lembrete e prazo) e envia a confirmação final. |
 
 Etapas do processo: `TRIAGEM → AVISO → DOCUMENTOS → CONCLUIDO`. Estados finais alternativos:
@@ -220,9 +221,11 @@ podem ser anexados de uma vez. Já `public/_invalidos/` tem arquivos para testar
 | Inatividade na Triagem | Ficar mais de 60 min sem responder | O atendimento reinicia |
 | Lembrete de documentos | Botão **⏰ Lembrete** no chat (etapa Documentos) ou 24h sem envio | Lista o que falta, com o protocolo |
 | Prazo de documentos expirado | Botão **⌛ Prazo expirado** ou 72h sem envio | `ESCALADO_HUMANO` (timeout_documentos) |
+| Consulta da apólice | `quando vence minha apólice?`, `minha apólice cobre vidros?`, `quero renovar meu seguro` | Pede o CPF (se preciso) e responde com os dados da persona |
+| Dúvida de seguro | `o que é sinistro?`, `o que é franquia?`, `como funciona a renovação?` | Responde pela base de conhecimento e retoma o atendimento |
 | Pedir atendente | `quero falar com um atendente` (qualquer etapa) | `ESCALADO_HUMANO` |
 | Desistir | `desisto, pode cancelar o atendimento` | `CANCELADO` |
-| Status ou dúvida no meio do fluxo | `qual o status do meu sinistro?`, `tem franquia?` | Responde e repete a pergunta pendente |
+| Status no meio do fluxo | `qual o status do meu sinistro?` | Responde e repete a pergunta pendente |
 | Fora de escopo (com o LLM de intenção ligado) | `me passa uma receita de bolo` | Explica o escopo e repete a pergunta pendente |
 | Pausa | Botão **Pausar agente** | Respostas de atendimento humano até retomar |
 
@@ -265,7 +268,8 @@ o `make run`.
 | `configs/triage_rules.yaml` | Classificação do ocorrido (palavras-chave), elegibilidade e mensagens de orientação |
 | `configs/documents_checklist.yaml` | Documentos exigidos por tipo de sinistro e regras de validação (formato, tamanho, metadados) |
 | `configs/messages.yaml` | Textos enviados ao cliente |
-| `configs/orchestrator.yaml` | Padrões das intenções (atendente, cancelar, status, dúvida, correção) |
+| `configs/orchestrator.yaml` | Padrões das intenções (atendente, cancelar, status, consulta, dúvida, correção) |
+| `configs/policy_info.yaml` · `data/knowledge/faq.yaml` | Consultas: tópicos da apólice, rótulos de coberturas, janela de renovação e base de conhecimento |
 | `configs/models.yaml` | Provedor e modelos de LLM (formato OpenAI), fallback, ajustes por papel e preços de referência |
 | `configs/experiments/` | Experimentos da avaliação (overrides de settings, guardrails e modelos) |
 
@@ -281,6 +285,7 @@ Segredos, como `GEMINI_API_KEY`, ficam apenas no `.env`, que nunca é versionado
 configs/        regras, mensagens e parâmetros (YAML)
 data/fixtures/  clientes e apólices sintéticos
 data/evaluation/ cenários de avaliação
+data/knowledge/  base de conhecimento de dúvidas de seguro (ilustrativa)
 docs/           requisitos, arquitetura, ADRs e mockup
 frontend/       chat simulado + painel (Vite + React + TS)
 prompts/        prompts versionados do LLM
