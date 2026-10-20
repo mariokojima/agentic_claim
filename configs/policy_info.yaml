@@ -1,0 +1,40 @@
+# Agente Consultas (ADR-0019): perguntas sobre a apólice da persona e dúvidas gerais de seguro.
+# Tópicos de apólice (regex, ignora maiúsculas). A ordem é a prioridade.
+topics:
+  coberturas:
+    - "(?i)\\b(cobertura|coberturas|cobre|cobrem|coberto|coberta)\\b"
+    - "(?i)\\bo\\s+que\\s+(\\w+\\s+){0,3}(ap[oó]lice|seguro)\\s+(inclui|tem|abrange)\\b"
+  renovacao:
+    - "(?i)\\b(renova\\w*|renovar)\\b"
+  vencimento:
+    - "(?i)\\b(vencimento|vence|venceu|vai\\s+vencer|expira|at[eé]\\s+quando)\\b"
+  vigencia:
+    - "(?i)\\b(vig[eê]ncia|vigente|est[aá]\\s+(ativa|v[aá]lida|em\\s+dia)|minha\\s+ap[oó]lice\\s+est[aá])\\b"
+  dados_apolice:
+    - "(?i)\\b(n[uú]mero\\s+da\\s+ap[oó]lice|dados\\s+da\\s+(minha\\s+)?ap[oó]lice|minha\\s+ap[oó]lice)\\b"
+
+# Pergunta sobre uma cobertura específica ("minha apólice cobre vidros?")
+coverage_keywords:
+  COLISAO: "(?i)\\b(colis[aã]o|batida|acidente|casco|enchente|alag\\w*|granizo|[aá]rvore|inunda\\w*)\\b"
+  ROUBO_FURTO: "(?i)\\b(roubo|furto)\\b"
+  INCENDIO: "(?i)\\binc[eê]ndio\\b"
+  TERCEIROS: "(?i)\\b(terceiros|responsabilidade\\s+civil)\\b"
+  VIDROS: "(?i)\\b(vidros?|para-?brisa|farol|retrovisor)\\b"
+  ASSISTENCIA_24H: "(?i)\\b(assist[eê]ncia|guincho|reboque)\\b"
+
+coverage_labels:
+  COLISAO: "Colisão (casco, inclui eventos da natureza)"
+  ROUBO_FURTO: "Roubo e furto"
+  INCENDIO: "Incêndio"
+  TERCEIROS: "Danos a terceiros"
+  VIDROS: "Vidros"
+  ASSISTENCIA_24H: "Assistência 24h"
+
+status_labels:
+  ATIVA: "ativa"
+  VENCIDA: "vencida"
+  CANCELADA: "cancelada"
+  SUSPENSA: "suspensa"
+
+renewal_window_days: 30     # renovação a partir de N dias antes do vencimento
+knowledge_base: data/knowledge/faq.yaml

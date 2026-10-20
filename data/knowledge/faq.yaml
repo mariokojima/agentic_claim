@@ -1,0 +1,64 @@
+# Base de conhecimento de dúvidas gerais de seguro auto (agente Consultas, ADR-0019).
+# Conteúdo ILUSTRATIVO e genérico para a PoC — não substitui as condições gerais do contrato.
+# Cada item: id, title, patterns (regex, ignora maiúsculas) e answer.
+entries:
+  - id: sinistro
+    title: O que é sinistro
+    patterns: ["(?i)\\bo\\s+que\\s+(é|e|significa)\\s+(um\\s+)?sinistro\\b", "(?i)\\bsinistro\\s+(é|significa)\\b"]
+    answer: "Sinistro é a ocorrência do evento coberto pelo seguro — por exemplo, uma colisão, o roubo do veículo ou um alagamento. Quando ele acontece, você faz o aviso de sinistro para que a seguradora analise o caso conforme as coberturas da sua apólice."
+  - id: aviso_sinistro
+    title: Aviso de sinistro
+    patterns: ["(?i)\\b(o\\s+que\\s+(é|e)|como\\s+(fa[cç]o|funciona))\\s+(o\\s+)?aviso\\s+de\\s+sinistro\\b", "(?i)\\bcomo\\s+(abro|abrir|abre)\\s+(um\\s+)?sinistro\\b"]
+    answer: "O aviso de sinistro é a comunicação do ocorrido à seguradora. Por aqui, eu pergunto o que aconteceu, quando e onde, registro o aviso, gero um protocolo e peço os documentos necessários. Para começar, basta me contar o que aconteceu."
+  - id: prazo_aviso
+    title: Prazo para avisar o sinistro
+    patterns: ["(?i)\\b(prazo|quanto\\s+tempo)\\s+(\\w+\\s+){0,4}(avisar|comunicar|abrir)\\b"]
+    answer: "O ideal é avisar o sinistro assim que possível, logo após o ocorrido. Avisos feitos muito tempo depois podem exigir uma análise adicional da equipe."
+  - id: franquia
+    title: Franquia
+    patterns: ["(?i)\\bfranquia\\b"]
+    answer: "Franquia é a parte do prejuízo que fica por conta do segurado em sinistros de perda parcial (quando o veículo pode ser consertado). O valor está definido no seu contrato e é confirmado na análise do sinistro."
+  - id: apolice
+    title: O que é apólice
+    patterns: ["(?i)\\bo\\s+que\\s+(é|e|significa)\\s+(a\\s+|uma\\s+)?ap[oó]lice\\b"]
+    answer: "A apólice é o documento que formaliza o seu contrato de seguro: identifica o veículo, o período de vigência, as coberturas contratadas e as condições."
+  - id: vigencia_geral
+    title: O que é vigência
+    patterns: ["(?i)\\bo\\s+que\\s+(é|e|significa)\\s+(a\\s+)?vig[eê]ncia\\b"]
+    answer: "Vigência é o período em que a apólice está valendo, com data de início e de fim. Eventos ocorridos fora desse período não são cobertos."
+  - id: renovacao_geral
+    title: Como funciona a renovação
+    patterns: ["(?i)\\bcomo\\s+(funciona|fa[cç]o|fazer)\\s+(a\\s+)?renova[cç][aã]o\\b"]
+    answer: "A renovação mantém o seu seguro ativo após o fim da vigência. Ela pode ser feita nos dias que antecedem o vencimento, com o seu corretor ou pela central. Renovar antes do vencimento evita ficar sem cobertura."
+  - id: terceiros
+    title: Cobertura de danos a terceiros
+    patterns: ["(?i)\\b(danos?\\s+a\\s+terceiros|cobertura\\s+de\\s+terceiros|responsabilidade\\s+civil|rcf)\\b"]
+    answer: "A cobertura de danos a terceiros (responsabilidade civil) cobre danos materiais e corporais que você causar a outras pessoas ou veículos, dentro dos limites contratados."
+  - id: casco
+    title: Cobertura de colisão (casco)
+    patterns: ["(?i)\\b(o\\s+que\\s+(é|e)\\s+)?(cobertura\\s+de\\s+)?casco\\b", "(?i)\\bcobertura\\s+compreensiva\\b"]
+    answer: "A cobertura de colisão (casco) cobre danos ao seu próprio veículo em acidentes e, em geral, eventos da natureza como alagamento e queda de árvore, conforme o contrato."
+  - id: assistencia
+    title: Assistência 24h
+    patterns: ["(?i)\\bassist[eê]ncia\\s*24\\s*h(oras)?\\b", "(?i)\\bo\\s+que\\s+(é|e)\\s+(a\\s+)?assist[eê]ncia\\b"]
+    answer: "A Assistência 24h oferece serviços como guincho, troca de pneu, chaveiro e pane seca. Ela não exige aviso de sinistro: basta acionar a central de assistência."
+  - id: carro_reserva
+    title: Carro reserva
+    patterns: ["(?i)\\bcarro\\s+reserva\\b"]
+    answer: "O carro reserva depende de a cobertura estar contratada na apólice e é liberado conforme as condições do contrato, normalmente após a aprovação do sinistro."
+  - id: vistoria
+    title: Vistoria
+    patterns: ["(?i)\\bvistoria\\b"]
+    answer: "A vistoria é a avaliação do veículo por um profissional da seguradora para verificar os danos. Quando necessária, a equipe entra em contato para agendar."
+  - id: perda_total
+    title: Perda total / indenização integral
+    patterns: ["(?i)\\b(perda\\s+total|indeniza[cç][aã]o\\s+integral)\\b"]
+    answer: "Há perda total quando o custo do reparo ultrapassa o limite definido no contrato em relação ao valor do veículo. Nesse caso, a indenização segue as condições da apólice, após a análise do sinistro."
+  - id: documentos
+    title: Documentos para o sinistro
+    patterns: ["(?i)\\b(quais|que)\\s+documentos\\b"]
+    answer: "Os documentos dependem do tipo de sinistro. Em geral, pedimos CNH do condutor, CRLV do veículo e fotos dos danos; em roubo, furto, incêndio ou quando há terceiros envolvidos, também o boletim de ocorrência."
+  - id: bonus
+    title: Bônus
+    patterns: ["(?i)\\bb[oô]nus\\b"]
+    answer: "O bônus é um desconto na renovação para quem não teve sinistros no período anterior. O acionamento do seguro pode alterar a classe de bônus, conforme o contrato."
