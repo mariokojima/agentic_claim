@@ -78,10 +78,6 @@ export default function App() {
       .customers()
       .then((list) => {
         setCustomers(list);
-        if (list.length) {
-          setPhone(list[0].phone);
-          void newConversation(list[0].phone);
-        }
       })
       .catch(() => setCustomers([]));
   }, [newConversation]);
@@ -107,7 +103,16 @@ export default function App() {
           <div className="sim-controls">
             <label>
               Simular como
-              <select value={phone} onChange={(e) => setPhone(e.target.value)}>
+              <select
+                value={phone}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  if (e.target.value) void newConversation(e.target.value);
+                }}
+              >
+                <option value="" disabled>
+                  Selecione um usuário
+                </option>
                 {customers.map((c) => (
                   <option key={c.id} value={c.phone}>
                     {c.name} — {c.note}
@@ -122,7 +127,7 @@ export default function App() {
               </div>
             ) : null}
           </div>
-          <ChatPanel conversationId={conversationId} />
+          <ChatPanel conversationId={conversationId} customerName={selected?.name} />
         </section>
         <section className="right">
           <div className="panel-header">

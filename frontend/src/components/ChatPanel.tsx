@@ -12,7 +12,13 @@ function hhmm(ts: string) {
   return new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }
 
-export function ChatPanel({ conversationId }: { conversationId: string | null }) {
+export function ChatPanel({
+  conversationId,
+  customerName,
+}: {
+  conversationId: string | null;
+  customerName?: string;
+}) {
   const [messages, setMessages] = useState<UiMessage[]>([]);
   const [state, setState] = useState<ConversationState | null>(null);
   const [text, setText] = useState("");
@@ -115,9 +121,8 @@ export function ChatPanel({ conversationId }: { conversationId: string | null })
       </div>
       <div className="chat-header">
         <div className="avatar">🛡️</div>
-        <div className="chat-title">
-          <div className="name">Assistente de Sinistros</div>
-          <div className="sub">{busy ? "digitando…" : "online"}</div>
+        <div className={`chat-name${customerName ? "" : " waiting"}`}>
+          {customerName ?? "aguardando usuário"}
         </div>
         <div className={`stage-chip stage-${stage}`} title={state?.terminal_reason ?? ""}>
           {STAGE_LABELS[stage] ?? stage}
