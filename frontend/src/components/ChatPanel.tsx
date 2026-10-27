@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { api, closeSafely, type ChatMessage, type ConversationState, type UploadedAttachment, wsUrl } from "../api";
-import { AUTO_DOC_TYPE, DOC_TYPES, STAGE_LABELS, guessDocType } from "../labels";
+import { AUTO_DOC_TYPE, DOC_TYPES, guessDocType } from "../labels";
 
 type Delivery = "sending" | "received" | "read";
 interface UiMessage extends ChatMessage {
@@ -123,9 +123,6 @@ export function ChatPanel({
         <div className="avatar">🛡️</div>
         <div className={`chat-name${customerName ? "" : " waiting"}`}>
           {customerName ?? "aguardando usuário"}
-        </div>
-        <div className={`stage-chip stage-${stage}`} title={state?.terminal_reason ?? ""}>
-          {STAGE_LABELS[stage] ?? stage}
         </div>
       </div>
       {state?.protocol ? <div className="protocol-bar">Protocolo {state.protocol}</div> : null}
