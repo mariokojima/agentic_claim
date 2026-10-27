@@ -39,7 +39,7 @@ button { font: inherit; cursor: pointer; }
 .sim-controls select { padding: 6px; border-radius: 8px; border: 1px solid var(--border); max-width: 250px; }
 .sim-controls button { padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel); }
 .sim-hint { width: 100%; color: var(--muted); font-size: 12px; }
-.poc-credit { width: 320px; margin: 20px; color: var(--muted); font-size: 11px; line-height: 1.45; text-align: left; }
+.poc-credit { width: 320px; margin: 20px; color: var(--muted); font-size: 12.5px; line-height: 1.45; text-align: left; }
 
 .phone { width: 360px; height: min(680px, calc(100vh - 320px)); min-height: 420px; flex: none; background: #f7f7f7; border-radius: 36px; box-shadow: 0 10px 30px rgba(20, 30, 50, 0.12); border: 8px solid #fff; display: flex; flex-direction: column; overflow: hidden; }
 .phone-status { display: flex; justify-content: space-between; padding: 8px 18px 4px; font-size: 13px; font-weight: 600; }
