@@ -125,7 +125,7 @@ export const STAGE_LABELS: Record<string, string> = {
 export const AUTO_DOC_TYPE = "auto";
 
 export const DOC_TYPES: { value: string; label: string }[] = [
-  { value: AUTO_DOC_TYPE, label: "Detectar pelo nome do arquivo" },
+
   { value: "CNH", label: "CNH do condutor" },
   { value: "CRLV", label: "CRLV do veículo" },
   { value: "FOTO_DANO", label: "Foto do dano" },

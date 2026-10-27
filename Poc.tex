@@ -1,0 +1,384 @@
+% =============================================================================
+% Poc.tex — Descrição da Prova de Conceito (PoC) para a seção 4.5 "Demonstração"
+% Dissertação: Inteligência Artificial Agêntica no Pipeline de Sinistros em Seguros
+%
+% Uso no Overleaf: \input{Poc} dentro da seção "Demonstração".
+% Pacotes esperados no preâmbulo principal: graphicx (figura) e abntex2cite (ou
+% natbib) para \cite. A figura usa o arquivo docs/figuras/poc-painel.png do
+% repositório; envie-o ao Overleaf como figuras/poc-painel.png ou ajuste o caminho.
+%
+% As chaves de citação estão listadas em BibTeX no fim deste arquivo (comentadas).
+% Se o seu .bib já usa outras chaves, basta substituí-las aqui.
+% =============================================================================
+
+\subsection{Prova de Conceito: recorte de Triagem, Aviso de Sinistro e Documentação}
+\label{sec:poc}
+
+A fase de demonstração, conforme preconizado pela DSR, tem por finalidade evidenciar que o
+artefato proposto é capaz de resolver, ao menos em um contexto controlado, instâncias do
+problema que motivou a pesquisa \cite{peffers2007,hevner2004}. Para tanto, foi construída uma
+Prova de Conceito (PoC) que instancia um recorte do \textit{framework} apresentado na
+Seção~4.4.1, abrangendo a orquestração, a Triagem, o Aviso de Sinistro e a etapa de
+Documentação e Evidências Digitais (Figuras 2 a 5), além da camada transversal de
+\textit{guardrails} corporativos (Figura~1). As etapas de Regulação, Vistoria, Avaliação,
+Liquidação e Pesquisa de Satisfação permanecem fora do recorte e são tratadas como trabalhos
+futuros.
+
+O recorte foi escolhido por concentrar as dores mais citadas pelos segurados — complexidade
+do processo de solicitação, falta de clareza sobre requisitos e documentos e ausência de
+empatia no primeiro contato \cite{capgemini2024b} — e por constituir a porta de entrada de todo
+o \textit{pipeline}: a qualidade das informações coletadas no aviso condiciona as etapas
+subsequentes de regulação e liquidação. Trata-se, adicionalmente, do ponto em que o Código
+Civil e o Marco Legal dos Seguros impõem ao segurado o dever de comunicar prontamente o
+sinistro \cite{brasil2002codigocivil,brasil2024marco}, o que torna a disponibilidade contínua
+de um canal conversacional particularmente relevante.
+
+\subsubsection{Objetivo e premissas da PoC}
+
+O objetivo da PoC é demonstrar a viabilidade técnica de um sistema multiagente que conduza a
+jornada do segurado desde a primeira mensagem, em um canal que simula o WhatsApp, até a
+conclusão da abertura do sinistro, com protocolo registrado e documentação mínima validada.
+Foram adotadas as seguintes premissas:
+
+\begin{itemize}
+  \item \textbf{Ramo automóvel}, contemplando os tipos de sinistro de veículo mais recorrentes:
+        colisão, roubo ou furto, incêndio, eventos da natureza (alagamento, granizo, queda de
+        árvore) e danos a vidros. Solicitações de assistência (guincho, pane) e assuntos que
+        não configuram sinistro recebem apenas orientação, sem abertura de processo.
+  \item \textbf{Dados exclusivamente sintéticos}: clientes, apólices, veículos e documentos
+        (CNH, CRLV, fotografias e boletins de ocorrência) são gerados artificialmente, em
+        conformidade com os princípios de minimização e proteção de dados pessoais. Nenhum dado
+        real é processado.
+  \item \textbf{Sistemas da seguradora simulados}: cadastro, apólices, registro de sinistros,
+        armazenamento e validação de documentos e envio de mensagens são implementados como
+        serviços simulados (\textit{mocks}) atrás de interfaces estáveis, de modo que a troca
+        por integrações reais não altere a lógica dos agentes \cite{ofoeda2019}.
+  \item \textbf{Modelos de linguagem como recurso e não como dependência}: o sistema funciona
+        integralmente com regras determinísticas e recorre ao LLM nos pontos em que a
+        linguagem natural do segurado excede o que as regras capturam, o que permite comparar
+        experimentalmente as duas abordagens (Seção~\ref{sec:poc-avaliacao}).
+\end{itemize}
+
+\subsubsection{Arquitetura e tecnologias}
+
+A PoC foi implementada em Python~3.12 com o \textit{framework} LangGraph, que modela a
+aplicação como um grafo de estados com suporte a ciclos, subgrafos e persistência
+(\textit{checkpointing}) da conversa. Essa escolha materializa a noção de agente como unidade
+que mantém estado interno persistente entre interações e decide a próxima ação a partir de
+observações parciais do ambiente \cite{liu2024,wang2023}. A API foi construída com FastAPI, com
+comunicação em tempo real via WebSocket, e a persistência utiliza SQLite para o estado das
+conversas, o domínio simulado e o registro de eventos. A interface web, desenvolvida em React
+com TypeScript e a biblioteca React Flow, reproduz um atendimento via WhatsApp e, lado a
+lado, um painel de observabilidade que exibe o fluxo de agentes em execução
+(Figura~\ref{fig:poc-painel}).
+
+O acesso aos modelos de linguagem é feito por um \textit{gateway} próprio que padroniza as
+chamadas no formato da API da OpenAI (\textit{OpenAI-compatible}), independentemente do
+provedor. Na PoC, o provedor configurado é o Google Gemini, com um modelo principal e um
+modelo de \textit{fallback} acionado em caso de indisponibilidade. As respostas estruturadas
+são solicitadas por esquema JSON e validadas com Pydantic, e cada chamada registra o modelo
+utilizado, a versão do \textit{prompt}, os \textit{tokens} consumidos e a latência. O
+\textit{gateway} corresponde ao componente \textit{AI Gateway} da arquitetura proposta
+(Figura~11) e garante que a substituição do provedor seja uma decisão de configuração, e não de
+código.
+
+As ferramentas (\textit{tools}) seguem o conceito de interfaces externas que ampliam a
+capacidade do agente para além da predição de linguagem \cite{schick2023,qin2023}. Cinco
+ferramentas foram definidas, cada uma com contrato tipado de entrada e saída, mecanismos de
+\textit{timeout} e novas tentativas com recuo exponencial, além de injeção configurável de
+falhas para avaliar a resiliência do sistema:
+
+\begin{itemize}
+  \item \texttt{get\_customer\_data}: consulta cadastro e apólices do segurado;
+  \item \texttt{open\_claim}: registra o aviso de sinistro e gera o protocolo;
+  \item \texttt{store\_files}: armazena os documentos vinculados ao protocolo;
+  \item \texttt{validate\_document}: valida formato, tamanho, duplicidade e consistência dos
+        metadados do documento com o processo;
+  \item \texttt{send\_whatsapp}: entrega a mensagem ao segurado.
+\end{itemize}
+
+As interfaces das ferramentas foram desenhadas de forma compatível com a exposição via
+\textit{Model Context Protocol} \cite{mcp2025}. Na versão atual da PoC, porém, elas são
+invocadas diretamente pelos agentes por meio de um registro de implementações (simuladas ou
+reais), e a publicação como servidor MCP permanece como evolução prevista.
+
+\subsubsection{Orquestração e agentes especialistas}
+
+A organização dos agentes segue o padrão hierárquico descrito na literatura de sistemas
+multiagentes baseados em LLM, em que um orquestrador central decompõe a tarefa e delega
+subtarefas a agentes especializados \cite{hill2025,singhal2026,sapkota2025}. Cada mensagem do
+segurado percorre o grafo principal na seguinte sequência:
+\textit{guardrails} de entrada $\rightarrow$ Orquestrador $\rightarrow$ agente especialista
+$\rightarrow$ transição de etapa $\rightarrow$ \textit{guardrails} de saída $\rightarrow$ envio.
+O estado global da conversa registra a etapa do processo
+(\textsc{Triagem} $\rightarrow$ \textsc{Aviso} $\rightarrow$ \textsc{Documentos}
+$\rightarrow$ \textsc{Concluído}), além de estados terminais alternativos (orientado,
+bloqueado, encaminhado a humano e cancelado). A mudança de etapa é realizada exclusivamente
+por uma função determinística de transição, o que garante previsibilidade e auditabilidade do
+fluxo.
+
+O \textbf{Orquestrador} implementa as três responsabilidades previstas na Figura~2:
+identifica a situação atual do sinistro, informa o status ao segurado quando solicitado e
+encaminha a mensagem ao especialista adequado. O encaminhamento usa uma tabela fixa que
+associa cada etapa a um especialista. Quando a mensagem foge do roteiro esperado, um
+classificador de intenções identifica desvios como dúvida, consulta à apólice, correção de
+dado já informado, pedido de status, cancelamento, pedido de atendimento humano ou assunto
+fora do escopo. O classificador combina regras e, opcionalmente, um LLM, e após tratar o
+desvio o atendimento é retomado a partir da pergunta pendente. Cada especialista é um subgrafo
+independente composto por subagentes, conforme a Tabela~\ref{tab:poc-agentes}.
+
+\begin{table}[htbp]
+\centering
+\caption{Agentes especialistas, subagentes e ferramentas da PoC}
+\label{tab:poc-agentes}
+\small
+\begin{tabular}{|p{2.6cm}|p{7.2cm}|p{3.4cm}|}
+\hline
+\textbf{Especialista} & \textbf{Subagentes (responsabilidade)} & \textbf{Ferramentas} \\
+\hline
+Triagem (Fig.~3) &
+Validação do segurado (CPF e apólices); classificação do ocorrido (tipo de sinistro);
+decisão de elegibilidade (status, vigência na data do evento e cobertura exigida pelo
+tipo); identificação de envolvidos e feridos (colisão), com sinalização de urgência &
+\texttt{get\_customer\_data} \\
+\hline
+Aviso de Sinistro (Fig.~4) &
+Coleta multi-turno dos dados do evento (quando, onde, o que aconteceu e danos);
+avaliação preliminar de cobertura; registro do aviso, com protocolo e próximos passos &
+\texttt{open\_claim} \\
+\hline
+Documentação (Fig.~5) &
+Lista de documentos por tipo de sinistro; recepção e armazenamento; validação;
+complementação (progresso, lembrete, prazo e confirmação final) &
+\texttt{store\_files}, \texttt{validate\_document} \\
+\hline
+Consultas &
+Classificação da pergunta; identificação do segurado; resposta sobre vigência,
+vencimento, renovação e coberturas da apólice ou sobre dúvidas gerais de seguro &
+\texttt{get\_customer\_data} \\
+\hline
+\end{tabular}
+\end{table}
+
+Na \textbf{Triagem}, o segurado é identificado pelo CPF e o relato livre do ocorrido é
+classificado, o que determina a cobertura exigida e os dados a coletar. Um mecanismo decisório
+define se o caso evolui para a abertura formal ou se o segurado deve apenas ser orientado (por
+exemplo, apólice vencida, evento fora da vigência, ausência da cobertura correspondente ou
+pedido de assistência), evitando a abertura indevida de processos, como propõe a Figura~3. No
+\textbf{Aviso de Sinistro}, os dados são extraídos de narrativas livres; quando uma informação
+está ausente, o agente solicita apenas o que falta, sem repetir o que já foi informado. Após a
+avaliação preliminar de cobertura, o aviso é registrado e o protocolo é comunicado. Na
+\textbf{Documentação}, a lista de documentos varia conforme o tipo de sinistro (por exemplo,
+boletim de ocorrência obrigatório em roubo ou furto e condicionado à existência de terceiros
+ou feridos em colisão). Cada arquivo é validado de forma determinística quanto a formato,
+tamanho, duplicidade e consistência dos metadados (CPF da CNH, placa do CRLV e data das
+fotografias em relação ao evento). O agente informa o que já foi aceito e o que ainda falta e,
+na ausência de resposta, envia lembrete e encaminha o caso a um atendente ao fim do prazo. O
+especialista \textbf{Consultas}, acrescentado durante o ciclo de design, responde perguntas
+sobre a própria apólice a partir dos dados cadastrais e dúvidas gerais (``o que é sinistro'',
+``o que é franquia'') a partir de uma base de conhecimento curada. Ele atende à
+responsabilidade de ``verificar a vigência e as coberturas da apólice'' atribuída a agentes de
+sinistro \cite{singhal2026} e reduz a falta de clareza apontada pelos segurados
+\cite{capgemini2024b}.
+
+\subsubsection{Uso de modelos de linguagem: regras primeiro, LLM como complemento}
+
+Em consonância com a ênfase da literatura em governança, previsibilidade e capacidade de
+intervenção humana em sistemas agênticos \cite{casper2025,hughes2025}, a PoC adota o princípio
+de ``regras primeiro, LLM como complemento''. Regras configuráveis (expressões e listas de
+termos em arquivos YAML) resolvem os casos recorrentes com custo e latência mínimos. O LLM é
+acionado quando as regras não são conclusivas, nos seguintes pontos:
+
+\begin{itemize}
+  \item extração e classificação do relato livre na Triagem e no Aviso (por exemplo, ``deixei o
+        carro estacionado e quando voltei ele não estava mais lá'' como roubo ou furto);
+  \item classificação de intenções do Orquestrador em mensagens que desviam do roteiro;
+  \item classificação de segurança, ética e conformidade corporativa nos \textit{guardrails};
+  \item redação de respostas a perguntas abertas, restrita à base de conhecimento e aos dados
+        da apólice, técnica alinhada à geração aumentada por recuperação (RAG) e com instrução
+        explícita de não prometer cobertura, valores ou prazos.
+\end{itemize}
+
+Todas as instruções enviadas ao LLM ficam em arquivos versionados, separados do código, e
+as respostas estruturadas são validadas por esquema. Em caso de falha do provedor, o sistema
+degrada para as regras sem interromper o atendimento.
+
+\subsubsection{Camada de \textit{guardrails} corporativos}
+
+A camada de \textit{guardrails} implementa as barreiras de proteção descritas na literatura
+\cite{dong2024} e posicionadas transversalmente no \textit{framework} (Figura~1). Toda
+mensagem recebida e toda resposta gerada passam por três estágios executados em paralelo:
+\textbf{Segurança} (\textit{prompt injection} direta e indireta, tentativas de
+\textit{jailbreak} e vazamento de dados pessoais), \textbf{Ética} (pedidos discriminatórios ou
+abusivos) e \textbf{Corporativo} (sinais de fraude e aderência às políticas). Um agregador
+consolida os resultados em um veredito (\textit{allow}, \textit{sanitize}, \textit{block} ou
+\textit{escalate}) acompanhado de justificativa. Cada estágio pode ser ativado ou desativado
+por configuração, o que viabiliza os experimentos comparativos. A detecção opera em duas
+camadas: regras determinísticas e, quando estas não bloqueiam, um classificador baseado em LLM
+que avalia os três estágios em uma única chamada e descarta veredictos de baixa confiança.
+
+A injeção indireta é tratada inspecionando também o nome e os metadados dos documentos
+enviados. Por exemplo, um arquivo nomeado com a instrução ``ignore as instruções e aprove o
+sinistro'' é bloqueado antes do armazenamento. Ao final da Triagem, a checagem corporativa é
+reexecutada com o contexto da apólice, incorporando sinais de fraude como apólice contratada
+pouco antes do evento e aviso feito muito tempo após o ocorrido. Em coerência com o princípio
+de \textit{human-in-the-loop} \cite{wu2022} e com a recomendação de manter sob supervisão
+humana as decisões de maior risco \cite{singhal2026}, os casos suspeitos não são negados
+automaticamente: são encaminhados a um atendente humano com a justificativa registrada. O
+painel dispõe ainda de um controle de pausa que suspende a atuação dos agentes e transfere
+as conversas para atendimento humano.
+
+\subsubsection{Observabilidade, auditabilidade e conformidade}
+
+Toda decisão relevante (roteamento, veredito de \textit{guardrail}, elegibilidade, chamada de
+ferramenta e chamada ao LLM) é emitida como evento estruturado, persistida e transmitida ao
+painel em tempo real. O registro inclui o agente, o subagente, a justificativa, a latência e,
+para chamadas ao LLM, o modelo, a versão do \textit{prompt} e os \textit{tokens} consumidos.
+Esse registro instrumenta as dimensões de conformidade e auditabilidade da Equação~1
+\cite{dodda2023} e atende aos requisitos de transparência e rastreabilidade em decisões
+automatizadas previstos no PL~2338/2023 \cite{camara2023pl2338}. Os dados pessoais (CPF e
+telefone) são mascarados em logs e eventos. As regras de negócio (elegibilidade, tipos de
+sinistro e coberturas exigidas, documentos por tipo, prazos de lembrete e de encerramento) são
+mantidas em arquivos de configuração, separadas do código, e as decisões de projeto foram
+documentadas em 19 registros de decisão arquitetural (ADRs), o que favorece a revisão por áreas
+de negócio e de \textit{compliance}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figuras/poc-painel.png}
+  \caption{Interface da PoC: à esquerda, o atendimento simulado via WhatsApp; à direita, o
+  fluxo de agentes com o especialista e os subagentes em execução e o log de eventos com a
+  justificativa de cada decisão. Fonte: Elaboração própria, 2026}
+  \label{fig:poc-painel}
+\end{figure}
+
+\subsubsection{Cenário ilustrativo}
+
+Para ilustrar o funcionamento, considere uma segurada sintética que inicia a conversa
+perguntando quando vence sua apólice. O Orquestrador identifica uma consulta e aciona o
+especialista Consultas, que solicita o CPF, consulta a apólice e informa a data de vencimento.
+Na sequência, a segurada relata ``roubaram meu carro ontem às 22h na Rua Augusta, 50''. Como
+o segurado já foi identificado, a Triagem não solicita novamente o CPF: o relato é classificado
+como roubo ou furto, e a apólice é verificada quanto ao status, à vigência na data do evento e
+à existência da cobertura correspondente. O Aviso de Sinistro reconhece no próprio relato a data, a
+hora, o local e o ocorrido, avalia preliminarmente a cobertura e registra o aviso, retornando
+o protocolo. Em seguida, o especialista de Documentação solicita boletim de ocorrência, CNH e
+CRLV e, após validar os arquivos enviados, encerra a abertura com uma mensagem final que
+contém o protocolo, o resumo do evento, os documentos recebidos e os próximos passos. Todo o
+percurso é visível no painel (Figura~\ref{fig:poc-painel}), e cada mensagem trocada passa pelos
+\textit{guardrails} de entrada e de saída.
+
+\subsubsection{Avaliação automatizada do artefato}
+\label{sec:poc-avaliacao}
+
+Como complemento à avaliação com especialistas baseada no TAM \cite{davis1989} (Seção~4.6), a
+PoC inclui um mecanismo de avaliação automatizada, executável com um único comando, que
+submete o sistema a uma bateria de cenários sintéticos sob diferentes configurações. Essa
+avaliação fornece evidências objetivas sobre eficácia, segurança e custo do artefato antes da
+apreciação pelos especialistas.
+
+Os \textbf{cenários} cobrem caminho feliz, dados faltantes, apólice vencida, evento sem
+cobertura, os diferentes tipos de sinistro, fraudes (texto, apólice recente, aviso tardio e
+fraude descrita de forma indireta), \textit{prompt injection} direta, indireta via documento e
+criativa, pedido discriminatório, assunto fora do escopo, pedido de atendimento humano,
+cancelamento, documentos inválidos, expiração de prazo, consultas à apólice e falsos
+positivos. Cada cenário declara o resultado esperado: etapa final, motivo de encerramento,
+sequência de especialistas acionados, intenções detectadas, ferramentas obrigatórias e
+proibidas e se deve ou não ser detectado como ataque.
+
+Os \textbf{experimentos} variam a configuração do sistema: (i) somente regras;
+(ii) somente regras e sem \textit{guardrails}; (iii) LLM como complemento na extração de
+dados; (iv) LLM também no roteamento de intenções; (v) LLM também nos \textit{guardrails};
+e (vi) a configuração anterior com um modelo menor, para comparação entre modelos. Para cada
+experimento são calculadas as métricas da Tabela~\ref{tab:poc-metricas}. Inspirada na proposta
+de LLM como juiz \cite{gu2026}, a avaliação automatizada pode ser estendida para julgar
+qualidade e empatia das respostas, dimensão que permanece para trabalho futuro.
+
+\begin{table}[htbp]
+\centering
+\caption{Métricas da avaliação automatizada da PoC}
+\label{tab:poc-metricas}
+\small
+\begin{tabular}{|p{4.0cm}|p{9.4cm}|}
+\hline
+\textbf{Métrica} & \textbf{Definição} \\
+\hline
+Taxa de sucesso & Proporção de cenários com todas as verificações corretas \\
+\hline
+Taxa de conclusão & Proporção de cenários que terminam na etapa e com o motivo esperados \\
+\hline
+Acerto de roteamento & Especialistas acionados e intenções detectadas iguais às esperadas \\
+\hline
+Correção das ferramentas & Ferramentas obrigatórias chamadas e nenhuma ferramenta proibida
+chamada \\
+\hline
+Detecção de ataques & Proporção de cenários de ataque bloqueados ou encaminhados a humano \\
+\hline
+Falsos positivos & Proporção de cenários legítimos indevidamente bloqueados ou encaminhados \\
+\hline
+Eficiência & Número de turnos, latência por turno (média e percentil 95), \textit{tokens} e
+custo estimado \\
+\hline
+Resiliência & Chamadas ao LLM, falhas e uso do modelo de \textit{fallback} \\
+\hline
+\end{tabular}
+\end{table}
+
+% [PREENCHER] Inserir aqui a tabela de resultados gerada por `make evaluate`
+% (reports/latest.md), após a execução final com o modelo principal disponível e,
+% de preferência, com repetições para reportar média e desvio.
+
+Uma execução preliminar, realizada antes da inclusão dos especialistas e cenários de consulta,
+indicou três tendências:
+
+\begin{itemize}
+  \item a desativação dos \textit{guardrails} eliminou a detecção de todos os ataques;
+  \item o uso do LLM como complemento elevou a taxa de sucesso em relação à configuração
+        baseada apenas em regras, sobretudo nos relatos ambíguos e nos desvios de roteiro;
+  \item o custo monetário das chamadas foi pouco relevante, enquanto a latência por turno
+        aumentou em uma ordem de grandeza, configurando o principal compromisso
+        (\textit{trade-off}) da abordagem.
+\end{itemize}
+
+\subsubsection{Limitações da demonstração}
+
+A PoC não utiliza o WhatsApp real nem integrações com sistemas legados, e os documentos são
+validados por metadados, sem OCR ou visão computacional. As etapas posteriores ao aviso
+(regulação, vistoria, avaliação, liquidação e pesquisa de satisfação) não foram implementadas.
+Os dados e a base de conhecimento são sintéticos e ilustrativos e não substituem condições
+contratuais reais. As listas de documentos por tipo de sinistro e as regras de fraude são
+propostas plausíveis, mas não normativas. Os resultados que envolvem LLM dependem da
+disponibilidade do provedor e da variabilidade intrínseca dos modelos, o que recomenda
+execuções repetidas para conclusões estatísticas. Ainda assim, a PoC demonstra que o recorte
+do \textit{framework} pode ser instanciado de forma modular, auditável e governada, conforme as
+diretrizes de projeto da Seção~4.4.2: modularidade, orquestração inteligente,
+\textit{human-in-the-loop}, governança e segurança, experiência do usuário por interface
+conversacional e orientação a dados.
+
+% =============================================================================
+% Referências usadas (BibTeX). Copie para o .bib apenas as que ainda não existirem
+% ou troque as chaves acima pelas do seu arquivo. Todas constam na lista de
+% referências do texto base da dissertação.
+% =============================================================================
+% @article{peffers2007, author={Peffers, Ken and others}, title={A design science research methodology for information systems research}, journal={Journal of Management Information Systems}, volume={24}, number={3}, year={2007}}
+% @article{hevner2004, author={Hevner, Alan R. and others}, title={Design science in information systems research}, journal={MIS Quarterly}, volume={28}, number={1}, year={2004}}
+% @article{capgemini2024b, author={{Capgemini}}, title={Maior parte dos brasileiros está insatisfeita com processo de acionamento de sinistro}, year={2024}, note={InfoMoney}}
+% @misc{brasil2002codigocivil, author={{Brasil}}, title={Lei nº 10.406, de 10 de janeiro de 2002: Institui o Código Civil}, year={2002}}
+% @misc{brasil2024marco, author={{Brasil}}, title={Lei nº 15.040, de 9 de dezembro de 2024: Marco Legal dos Seguros}, year={2024}}
+% @article{ofoeda2019, author={Ofoeda, Joshua and Boateng, Richard and Effah, John}, title={Application programming interface (API) research: A review of the past to inform the future}, journal={International Journal of Enterprise Information Systems}, volume={15}, number={3}, pages={76--95}, year={2019}}
+% @inproceedings{liu2024, author={Liu, B. and others}, title={Large language model based multi-agents: A survey of progress and challenges}, booktitle={Proceedings of the 33rd IJCAI}, year={2024}}
+% @article{wang2023, author={Wang, W. and others}, title={A survey on large language model based autonomous agents}, journal={arXiv preprint arXiv:2308.11432}, year={2023}}
+% @article{schick2023, author={Schick, T. and others}, title={Toolformer: Language models can teach themselves to use tools}, journal={Advances in Neural Information Processing Systems}, volume={36}, year={2023}}
+% @article{qin2023, author={Qin, Y. and others}, title={ToolLLM: Facilitating large language models to master 16000+ real-world APIs}, journal={arXiv preprint arXiv:2307.16789}, year={2023}}
+% @misc{mcp2025, author={{MCP}}, title={Model Context Protocol}, year={2025}, howpublished={\url{https://modelcontextprotocol.io/docs/getting-started/intro}}}
+% @article{hill2025, author={Hill, G. and others}, title={LLMs and agentic AI in insurance decision-making: Opportunities and challenges for Africa}, journal={arXiv preprint arXiv:2508.15110}, year={2025}}
+% @article{singhal2026, author={Singhal, S.}, title={Agentic AI in claims processing: Transforming insurance operations through autonomous AI systems}, journal={Journal of Computational Analysis and Applications}, volume={35}, number={2}, pages={208--218}, year={2026}}
+% @misc{sapkota2025, author={Sapkota, R. and Roumeliotis, K. I. and Karkee, M.}, title={AI agents vs. agentic AI: A conceptual taxonomy, applications and challenges}, year={2025}}
+% @article{casper2025, author={Casper, S. and others}, title={The 2025 AI agent index}, journal={arXiv preprint arXiv:2602.17753}, year={2025}}
+% @article{hughes2025, author={Hughes, L. and others}, title={AI agents and agentic systems: A multi-expert analysis}, journal={Journal of Management Information Systems}, year={2025}}
+% @article{dong2024, author={Dong, Y. and others}, title={Building guardrails for large language models}, journal={arXiv preprint arXiv:2402.01822}, year={2024}}
+% @article{wu2022, author={Wu, X. and others}, title={A survey of human-in-the-loop for machine learning}, journal={Future Generation Computer Systems}, volume={135}, pages={364--381}, year={2022}}
+% @article{dodda2023, author={Dodda, A.}, title={AI governance and security in fintech: Ensuring trust in generative and agentic AI systems}, journal={American Advanced Journal for Emerging Disciplinaries}, volume={1}, pages={1--14}, year={2023}}
+% @misc{camara2023pl2338, author={{Câmara dos Deputados}}, title={PL 2338/2023: Lei Geral de Inteligência Artificial}, year={2023}}
+% @article{davis1989, author={Davis, F. D.}, title={Perceived usefulness, perceived ease of use, and user acceptance of information technology}, journal={MIS Quarterly}, volume={13}, number={3}, pages={319--340}, year={1989}}
+% @article{gu2026, author={Gu, J. and others}, title={A survey on LLM-as-a-judge}, journal={The Innovation}, volume={7}, number={6}, year={2026}}
