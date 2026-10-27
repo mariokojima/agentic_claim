@@ -128,6 +128,12 @@ export default function App() {
             ) : null}
           </div>
           <ChatPanel conversationId={conversationId} customerName={selected?.name} />
+          <p className="poc-credit">
+            Essa prova de conceito é parte integrante da pesquisa de mestrado "Inteligência
+            Artificial Agêntica no Pipeline de Sinistro de Seguro", de <b>Mário Kojima</b>{" "}
+            (mariokojima@gmail.com) do curso de Computação Aplicada da Universidade
+            Presbiteriana Mackenzie
+          </p>
         </section>
         <section className="right">
           <div className="panel-header">
