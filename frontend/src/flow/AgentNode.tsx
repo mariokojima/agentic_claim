@@ -1,6 +1,7 @@
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import type { NodeState } from "./status";
 import { STATUS_LABELS } from "../labels";
+import { AgentAvatar } from "./AgentAvatar";
 
 export type AgentNodeData = { label: string; state?: NodeState; kind?: "specialist" | "core" | "subagent" | "spacer" };
 export type AgentNodeType = Node<AgentNodeData, "agent">;
@@ -14,7 +15,7 @@ export function AgentNode({ data }: NodeProps<AgentNodeType>) {
       <Handle type="target" position={Position.Top} id="t" />
       <Handle type="target" position={Position.Bottom} id="bt" />
       <div className="agent-node-title">
-        <span className={`dot dot-${status}`} />
+        <AgentAvatar status={status} size={data.kind === "subagent" ? 18 : 24} />
         {data.label}
       </div>
       <div className="agent-node-detail">{detail}</div>

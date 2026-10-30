@@ -159,3 +159,19 @@ button { font: inherit; cursor: pointer; }
   .flow-row { grid-template-columns: 1fr; height: auto; }
   .flow-canvas { height: 380px; }
 }
+
+/* Avatares dos agentes: expressão conforme o status (AgentAvatar.tsx) */
+.agent-avatar { flex: none; --av-bg: #eef1f5; --av-fg: #8a94a6; transition: transform 0.25s; }
+.agent-avatar .avatar-head { fill: var(--av-bg); transition: fill 0.3s; }
+.agent-avatar .avatar-face { fill: none; stroke: var(--av-fg); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; animation: avatar-face-in 0.3s ease-out; }
+.agent-avatar .avatar-face .fill { fill: var(--av-fg); stroke: none; }
+.agent-avatar.avatar-processing { --av-bg: #e3edfd; --av-fg: var(--blue); transform: scale(1.08); }
+.agent-avatar.avatar-processing .avatar-head { animation: avatar-pulse 1.4s ease-in-out infinite; }
+.agent-avatar .avatar-eyes-scan { animation: avatar-scan 1.6s ease-in-out infinite; }
+.agent-avatar.avatar-completed { --av-bg: #e2f5e9; --av-fg: var(--green); }
+.agent-avatar.avatar-warning, .agent-avatar.avatar-error { --av-bg: #fde7e7; --av-fg: var(--red); }
+.agent-node.subagent .agent-node-title .agent-avatar { margin-top: 0; }
+@keyframes avatar-face-in { from { opacity: 0; transform: translateY(1px); } to { opacity: 1; transform: none; } }
+@keyframes avatar-scan { 0%, 100% { transform: translateX(-1px); } 50% { transform: translateX(1px); } }
+@keyframes avatar-pulse { 0%, 100% { fill: #e3edfd; } 50% { fill: #cfe0fb; } }
+@media (prefers-reduced-motion: reduce) { .agent-avatar * { animation: none !important; } }
