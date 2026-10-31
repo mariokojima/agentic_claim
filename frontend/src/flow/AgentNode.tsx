@@ -1,22 +1,12 @@
-import type React from "react";
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import type { NodeState } from "./status";
 import { STATUS_LABELS } from "../labels";
 import { AgentAvatar } from "./AgentAvatar";
+import { ACCENTS, accentStyle } from "./accents";
 
 export type AgentNodeData = { label: string; state?: NodeState; kind?: "specialist" | "core" | "subagent" | "spacer" };
 export type AgentNodeType = Node<AgentNodeData, "agent">;
 
-/** Cor de destaque dos agentes principais (borda e título do box). */
-const ACCENTS: Record<string, string> = {
-  orchestrator: "#38BDF8",
-  guardrails_in: "#FB7185",
-  guardrails_out: "#FB7185",
-  triage: "#B852FF",
-  claim_notice: "#00FF9D",
-  documents: "#fee440",
-  policy_info: "#ff9f1c",
-};
 
 export function AgentNode({ id, data }: NodeProps<AgentNodeType>) {
   const status = data.state?.status ?? "idle";
@@ -24,7 +14,7 @@ export function AgentNode({ id, data }: NodeProps<AgentNodeType>) {
   return (
     <div
       className={`agent-node status-${status} ${data.kind ?? "core"}${ACCENTS[id] ? " accented" : ""}`}
-      style={ACCENTS[id] ? ({ "--accent": ACCENTS[id] } as React.CSSProperties) : undefined}
+      style={accentStyle(id)}
       title={detail}
     >
       <Handle type="target" position={Position.Left} id="l" />

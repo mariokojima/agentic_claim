@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { AgentEvent } from "../api";
+import { ACCENTS, accentStyle } from "../flow/accents";
 import { AGENT_LABELS, EVENT_LABELS, STATUS_LABELS, TOOL_LABELS, subagentLabel } from "../labels";
 
 const NODE_EVENTS = new Set(["node_start", "node_end", "subagent_start", "subagent_end", "tool_start", "llm_start"]);
@@ -64,7 +65,15 @@ export function EventLog({ events, conversationId }: { events: AgentEvent[]; con
             {rows.map((ev) => (
               <tr key={ev.id} className={isGuardrailAlert(ev) ? "row-alert" : undefined}>
                 <td className="mono">{time(ev.ts)}</td>
-                <td>{agentLabel(ev)}</td>
+                <td>
+                  {ACCENTS[ev.agent] ? (
+                    <span className="log-agent accented-text" style={accentStyle(ev.agent)}>
+                      {agentLabel(ev)}
+                    </span>
+                  ) : (
+                    agentLabel(ev)
+                  )}
+                </td>
                 <td>
                   {EVENT_LABELS[ev.event] ?? ev.event}
                   {ev.tool ? `: ${TOOL_LABELS[ev.tool] ?? ev.tool}` : ""}

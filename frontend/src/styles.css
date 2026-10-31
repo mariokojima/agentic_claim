@@ -272,3 +272,10 @@ body, .topbar, .agent-node, .tool-card, .event-log, .flow-canvas, .phone { trans
 :root[data-theme="dark"] .agent-avatar.avatar-processing { --av-fg: #cfe2ff; }
 :root[data-theme="dark"] .agent-avatar.avatar-completed { --av-fg: #b6f5cc; }
 :root[data-theme="dark"] .agent-avatar.avatar-warning, :root[data-theme="dark"] .agent-avatar.avatar-error { --av-fg: #ffc9c9; }
+
+/* Coluna "Agente" do log com a cor de destaque do agente (mesmo tom do fluxo) */
+.log-agent { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; }
+.log-agent::before { content: ""; width: 4px; height: 14px; border-radius: 2px; background: var(--accent); flex: none; }
+.accented-text { color: color-mix(in srgb, var(--accent) 62%, #10151c); }
+:root[data-theme="dark"] .accented-text { color: var(--accent); }
+.event-table tr.row-alert .log-agent { color: var(--alert-text); }
