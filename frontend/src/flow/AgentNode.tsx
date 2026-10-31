@@ -1,3 +1,4 @@
+import type React from "react";
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import type { NodeState } from "./status";
 import { STATUS_LABELS } from "../labels";
@@ -6,11 +7,26 @@ import { AgentAvatar } from "./AgentAvatar";
 export type AgentNodeData = { label: string; state?: NodeState; kind?: "specialist" | "core" | "subagent" | "spacer" };
 export type AgentNodeType = Node<AgentNodeData, "agent">;
 
-export function AgentNode({ data }: NodeProps<AgentNodeType>) {
+/** Cor de destaque dos agentes principais (borda e título do box). */
+const ACCENTS: Record<string, string> = {
+  orchestrator: "#38BDF8",
+  guardrails_in: "#FB7185",
+  guardrails_out: "#FB7185",
+  triage: "#B852FF",
+  claim_notice: "#00FF9D",
+  documents: "#4ADE80",
+  policy_info: "#ff9f1c",
+};
+
+export function AgentNode({ id, data }: NodeProps<AgentNodeType>) {
   const status = data.state?.status ?? "idle";
   const detail = data.state?.detail ?? STATUS_LABELS.idle;
   return (
-    <div className={`agent-node status-${status} ${data.kind ?? "core"}`} title={detail}>
+    <div
+      className={`agent-node status-${status} ${data.kind ?? "core"}${ACCENTS[id] ? " accented" : ""}`}
+      style={ACCENTS[id] ? ({ "--accent": ACCENTS[id] } as React.CSSProperties) : undefined}
+      title={detail}
+    >
       <Handle type="target" position={Position.Left} id="l" />
       <Handle type="target" position={Position.Top} id="t" />
       <Handle type="target" position={Position.Bottom} id="bt" />

@@ -251,3 +251,12 @@ body, .topbar, .agent-node, .tool-card, .event-log, .flow-canvas, .phone { trans
 @keyframes avatar-pulse { 0%, 100% { fill: var(--av-blue-bg); } 50% { fill: var(--av-blue-bg-2); } }
 @media (prefers-reduced-motion: reduce) { .agent-avatar * { animation: none !important; } }
 .flow-canvas .react-flow { --xy-background-color: var(--panel); }
+
+/* Cor de destaque por agente principal (AgentNode.tsx). No tema claro o título usa um tom
+   escurecido do destaque para manter o contraste; no escuro, o tom puro. */
+.agent-node.accented { --accent-text: color-mix(in srgb, var(--accent) 62%, #10151c); border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); border-left: 3px solid var(--accent); }
+:root[data-theme="dark"] .agent-node.accented { --accent-text: var(--accent); }
+.agent-node.accented .agent-node-title { color: var(--accent-text); }
+.agent-node.accented.status-processing { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
+.agent-node.accented.status-warning, .agent-node.accented.status-error { border-color: var(--alert); }
+.agent-node.accented.status-warning .agent-node-title, .agent-node.accented.status-error .agent-node-title { color: var(--alert-text); }
