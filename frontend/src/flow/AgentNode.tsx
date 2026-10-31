@@ -14,7 +14,7 @@ const ACCENTS: Record<string, string> = {
   guardrails_out: "#FB7185",
   triage: "#B852FF",
   claim_notice: "#00FF9D",
-  documents: "#4ADE80",
+  documents: "#fee440",
   policy_info: "#ff9f1c",
 };
 
