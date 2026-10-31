@@ -122,17 +122,6 @@ export const STAGE_LABELS: Record<string, string> = {
   CANCELADO: "Cancelado",
 };
 
-export const AUTO_DOC_TYPE = "auto";
-
-export const DOC_TYPES: { value: string; label: string }[] = [
-
-  { value: "CNH", label: "CNH do condutor" },
-  { value: "CRLV", label: "CRLV do veículo" },
-  { value: "FOTO_DANO", label: "Foto do dano" },
-  { value: "BOLETIM_OCORRENCIA", label: "Boletim de ocorrência" },
-  { value: "", label: "(sem tipo)" },
-];
-
 /** Tipo de documento pelo nome do arquivo (ex.: cnh.jpg, crlv.jpg, foto_dano_1.jpg, boletim.jpg). */
 export function guessDocType(filename: string): string {
   const name = filename.toLowerCase();

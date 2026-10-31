@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { api, closeSafely, type ChatMessage, type ConversationState, type UploadedAttachment, wsUrl } from "../api";
-import { AUTO_DOC_TYPE, DOC_TYPES, guessDocType } from "../labels";
+import { guessDocType } from "../labels";
 
 type Delivery = "sending" | "received" | "read";
 interface UiMessage extends ChatMessage {
@@ -24,7 +24,6 @@ export function ChatPanel({
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [trayOpen, setTrayOpen] = useState(false);
-  const [docType, setDocType] = useState(AUTO_DOC_TYPE);
   const [pending, setPending] = useState<UploadedAttachment[]>([]);
   const [error, setError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -94,7 +93,7 @@ export function ChatPanel({
     if (!files || !conversationId) return;
     setError(null);
     try {
-      const typeOf = (f: File) => (docType === AUTO_DOC_TYPE ? guessDocType(f.name) : docType);
+      const typeOf = (f: File) => guessDocType(f.name);
       const uploaded = await Promise.all([...files].map((f) => api.upload(conversationId, f, typeOf(f))));
       setPending((prev) => [...prev, ...uploaded]);
     } catch (e) {
@@ -151,18 +150,11 @@ export function ChatPanel({
       {error ? <div className="chat-error" onClick={() => setError(null)}>{error}</div> : null}
       {trayOpen ? (
         <div className="attach-tray">
-          <select value={docType} onChange={(e) => setDocType(e.target.value)}>
-            {DOC_TYPES.map((d) => (
-              <option key={d.value} value={d.value}>
-                {d.label}
-              </option>
-            ))}
-          </select>
           <label className="file-btn">
             Escolher arquivo(s)
             <input type="file" multiple hidden onChange={(e) => { void onFiles(e.target.files); e.target.value = ""; }} />
           </label>
-          <div className="hint">Metadados sintéticos (CPF, placa, data) são preenchidos automaticamente.</div>
+          <div className="hint">O tipo de documento é identificado pelo nome do arquivo; metadados sintéticos (CPF, placa, data) são preenchidos automaticamente.</div>
         </div>
       ) : null}
       {pending.length > 0 ? (
