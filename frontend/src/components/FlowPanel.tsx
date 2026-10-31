@@ -17,7 +17,13 @@ const TOOL_ICONS: Record<string, string> = {
   llm: "🧠",
 };
 
-export function FlowPanel({ statuses: rawStatuses }: { statuses: Record<string, NodeState> }) {
+export function FlowPanel({
+  statuses: rawStatuses,
+  colorMode = "light",
+}: {
+  statuses: Record<string, NodeState>;
+  colorMode?: "light" | "dark";
+}) {
   // Verde (concluído) volta à cor original após FADE_COMPLETED_MS; atenção/erro permanecem.
   const statuses = useFadeCompleted(rawStatuses);
   // Nós controlados: atualizar só `data` preserva as medidas internas do React Flow. Recriar os
@@ -40,6 +46,7 @@ export function FlowPanel({ statuses: rawStatuses }: { statuses: Record<string, 
       <div className="flow-canvas">
         <div className="section-label">Agentes</div>
         <ReactFlow
+          colorMode={colorMode}
           nodes={nodes}
           onNodesChange={onNodesChange}
           edges={edges}

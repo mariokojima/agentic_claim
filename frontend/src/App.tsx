@@ -58,7 +58,30 @@ function useEventStream() {
   return { events, metrics, pause, setPause, online };
 }
 
+type Theme = "light" | "dark";
+const THEME_KEY = "claims-poc-theme";
+
+function initialTheme(): Theme {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === "light" || saved === "dark") return saved;
+  } catch {
+    /* armazenamento indisponível: segue a preferência do sistema */
+  }
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 export default function App() {
+  const [theme, setTheme] = useState<Theme>(initialTheme);
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      /* ignora: o tema vale só para esta sessão */
+    }
+  }, [theme]);
+
   const { events, metrics, pause, setPause, online } = useEventStream();
   const [customers, setCustomers] = useState<SyntheticCustomer[]>([]);
   const [phone, setPhone] = useState("");
@@ -97,6 +120,14 @@ export default function App() {
           <span className="logo-mark">◭</span> <b>Pipeline Agêntica de Sinistro</b>
         </div>
         <div className="topbar-sub">PoC — Abertura de sinistro (dados sintéticos)</div>
+        <div className="theme-switch" role="group" aria-label="Tema">
+          <button type="button" aria-pressed={theme === "light"} onClick={() => setTheme("light")}>
+            ☀ Claro
+          </button>
+          <button type="button" aria-pressed={theme === "dark"} onClick={() => setTheme("dark")}>
+            ☾ Escuro
+          </button>
+        </div>
       </header>
       <main className="layout">
         <section className="left">
@@ -156,7 +187,7 @@ export default function App() {
               {paused ? "▶ Retomar agente" : "❚❚ Pausar agente"}
             </button>
           </div>
-          <FlowPanel statuses={statuses} />
+          <FlowPanel statuses={statuses} colorMode={theme} />
           <EventLog events={events} conversationId={conversationId} />
         </section>
       </main>
