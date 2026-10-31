@@ -152,9 +152,9 @@ export function ChatPanel({
         <div className="attach-tray">
           <label className="file-btn">
             Escolher arquivo(s)
-            <input type="file" multiple hidden onChange={(e) => { void onFiles(e.target.files); e.target.value = ""; }} />
+            <input type="file" multiple hidden accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" onChange={(e) => { void onFiles(e.target.files); e.target.value = ""; }} />
           </label>
-          <div className="hint">O tipo de documento é identificado pelo nome do arquivo; metadados sintéticos (CPF, placa, data) são preenchidos automaticamente.</div>
+          <div className="hint">Envie arquivos em PDF, JPG ou PNG.</div>
         </div>
       ) : null}
       {pending.length > 0 ? (
