@@ -56,8 +56,12 @@ def test_recent_policy_context_rule() -> None:
 
 
 def test_prompts_are_versioned() -> None:
-    for name in ("triage/event_classification", "triage/parties", "common/writer"):
+    for name, version in (
+        ("triage/event_classification", "1"),
+        ("triage/parties", "1"),
+        ("common/writer", "2"),
+    ):
         prompt = load_prompt(name)
-        assert prompt.version == "1" and prompt.text and prompt.ref == f"{name}@v1"
+        assert prompt.version == version and prompt.text and prompt.ref == f"{name}@v{version}"
     rendered = load_prompt("triage/parties").render(question="Q?", description="D")
     assert '"Q?"' in rendered and '"D"' in rendered

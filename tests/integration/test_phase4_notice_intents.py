@@ -60,7 +60,7 @@ async def test_notice_asks_damages_and_registers_with_coverage(
     assert r.state.claim_stage == ClaimStage.DOCUMENTOS and r.state.protocol
     msg = replies(r)
     assert "Danos: para-choque traseiro, lanterna" in msg
-    assert "Avaliação preliminar" in msg and "análise da equipe" in msg
+    assert "avaliação preliminar" in msg and "análise da nossa equipe" in msg
     assert "terceiros" not in msg  # sem terceiros, não menciona essa cobertura
 
 
@@ -216,9 +216,7 @@ async def test_intent_llm_flag_on_handles_deviations(
     graph = make_graph(llm=llm)
     await to_notice(graph, "f2", happy_customer)
     r = await run_turn(graph, "f2", text("me passa uma receita de bolo de cenoura"))
-    assert (
-        "dedicado à abertura de sinistros" in replies(r) and r.state.claim_stage == ClaimStage.AVISO
-    )
+    assert "dedicado a sinistros" in replies(r) and r.state.claim_stage == ClaimStage.AVISO
     r = await run_turn(graph, "f2", text("o fulano disse que viu tudo"))  # confiança baixa
     assert r.state.claim_stage == ClaimStage.AVISO and "dedicado" not in replies(r)
     r = await run_turn(graph, "f2", text("ontem às 18h na Av. Paulista, 1000; amassou a frente"))

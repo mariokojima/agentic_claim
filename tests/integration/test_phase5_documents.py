@@ -80,7 +80,7 @@ async def test_partial_upload_reports_validated_and_pending(
     cnh = attachment(tmp_path, DocumentType.CNH, {"cpf": happy_customer.cpf})
     r = await run_turn(graph, "d2", text("Segue a CNH", [cnh]))
     msg = replies(r)
-    assert "Já validei:\n• CNH do condutor" in msg
+    assert "Recebi e validei:\n• CNH do condutor" in msg
     assert "Ainda faltam:" in msg and "CRLV do veículo" in msg and "Fotos dos danos" in msg
     assert r.state.claim_stage == ClaimStage.DOCUMENTOS
 

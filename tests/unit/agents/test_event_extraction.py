@@ -109,4 +109,4 @@ async def test_no_progress_counts_attempts_until_failure() -> None:
 
 async def test_future_date_asks_for_confirmation() -> None:
     (out,) = await _run(["bati na Av. Paulista em 20/10"])
-    assert "está no futuro" in out["result"].user_message
+    assert "ficou no futuro" in out["result"].user_message

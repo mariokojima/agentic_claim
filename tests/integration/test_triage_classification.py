@@ -157,7 +157,7 @@ async def test_unclear_event_escalates_after_attempts(
     await run_turn(graph, "t3", text(happy_customer.cpf))
     for _ in range(2):
         r = await run_turn(graph, "t3", text("não sei"))
-        assert r.state.claim_stage == ClaimStage.TRIAGEM and "Não consegui entender" in replies(r)
+        assert r.state.claim_stage == ClaimStage.TRIAGEM and "consegui entender" in replies(r)
     r = await run_turn(graph, "t3", text("sei lá"))
     assert r.state.claim_stage == ClaimStage.ESCALADO_HUMANO
 
@@ -166,7 +166,8 @@ async def test_injuries_raise_urgency(graph: Graph, happy_customer: Customer) ->
     await run_turn(graph, "t4", text("Oi"))
     await run_turn(graph, "t4", text(happy_customer.cpf))
     r = await run_turn(graph, "t4", text("Bati o carro e tem um ferido"))
-    assert replies(r) == "Havia outro veículo ou pessoa envolvida no ocorrido?"  # só o que falta
+    # acolhimento + só o que falta
+    assert replies(r).endswith("\n\nHavia outro veículo ou pessoa envolvida no ocorrido?")
     r = await run_turn(graph, "t4", text("não"))
     assert "SAMU (192)" in replies(r) and r.state.claim_stage == ClaimStage.AVISO
     assert r.state.triage.outcome["has_injuries"] is True

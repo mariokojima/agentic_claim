@@ -19,6 +19,13 @@ class Messages:
             node = node[part]
         return str(node).format(**kwargs) if kwargs else str(node)
 
+    def optional(self, key: str, **kwargs: Any) -> str:
+        """Como `get`, mas devolve "" quando a chave não existe."""
+        try:
+            return self.get(key, **kwargs)
+        except (KeyError, TypeError):
+            return ""
+
 
 @lru_cache
 def load_messages() -> Messages:

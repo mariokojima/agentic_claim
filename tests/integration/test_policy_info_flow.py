@@ -43,11 +43,11 @@ async def test_first_message_query_asks_cpf_then_answers(
 ) -> None:
     graph = make_graph()
     r = await run_turn(graph, "q1", text("Oi, quando vence minha apólice?"))
-    assert "informe o CPF" in replies(r) and r.state.awaiting.stage == "CONSULTA"  # type: ignore[union-attr]
+    assert "informar o CPF" in replies(r) and r.state.awaiting.stage == "CONSULTA"  # type: ignore[union-attr]
     r = await run_turn(graph, "q1", text(happy_customer.cpf))
     msg = replies(r)
     assert "AUTO-0001-01" in msg and "vence em 14/01/2027" in msg
-    assert "Posso ajudar com mais alguma coisa?" in msg
+    assert "Posso ajudar em mais alguma coisa?" in msg
     assert r.state.awaiting is None and r.state.customer is not None
     assert r.state.claim_stage == ClaimStage.TRIAGEM and r.state.protocol is None
     assert "policy_info" in [e.data.get("target") for e in r.events if e.event == "route"]
@@ -121,4 +121,4 @@ async def test_multiple_policies_and_unknown_cpf(make_graph: Any, fixtures: Any)
     )
     await run_turn(graph, "q7", text("quando vence minha apólice?"))
     r = await run_turn(graph, "q7", text("529.982.247-25"))
-    assert "Não localizei apólices" in replies(r)
+    assert "Não encontrei apólices" in replies(r)

@@ -20,7 +20,7 @@ documents:
   complement_timeout_minutes: 4320 # 72 h
   sweep_interval_seconds: 60       # verificador periódico na API (0 = desligado)
 pause:
-  handoff_message: "Seu atendimento foi transferido para um de nossos especialistas humanos. Em breve alguém dará continuidade por aqui."
+  handoff_message: "Seu atendimento foi transferido para um de nossos especialistas, que vai continuar por aqui com você em instantes."
 metrics:
   success_terminal_states: [CONCLUIDO, ORIENTADO]
   count_open_flows: false

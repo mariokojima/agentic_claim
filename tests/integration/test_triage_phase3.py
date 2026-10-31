@@ -72,7 +72,7 @@ async def test_llm_classifies_what_rules_do_not_understand(
     r = await run_turn(graph, "l1", text("um cara entrou na contramão e pegou minha porta"))
     assert len(llm.calls) == 1 and llm.calls[0]["role"] == "extraction"
     assert r.state.triage.outcome["classification_source"] == "llm"
-    assert replies(r) == "Alguém se feriu?"  # terceiro já informado pelo LLM
+    assert replies(r).endswith("\n\nAlguém se feriu?")  # terceiro já informado pelo LLM
     events = [e for e in r.events if e.event == "event_classified"]
     assert "via llm" in events[0].details
 
@@ -85,7 +85,7 @@ async def test_llm_failure_degrades_to_rules(
     await run_turn(graph, "l2", text("Oi"))
     await run_turn(graph, "l2", text(happy_customer.cpf))
     r = await run_turn(graph, "l2", text("um cara entrou na contramão e pegou minha porta"))
-    assert r.state.claim_stage == ClaimStage.TRIAGEM and "Não consegui entender" in replies(r)
+    assert r.state.claim_stage == ClaimStage.TRIAGEM and "consegui entender" in replies(r)
 
 
 async def test_llm_disabled_by_flag(
@@ -154,7 +154,7 @@ async def test_unanswered_parties_escalates(
     await run_turn(graph, "p4", text(happy_customer.cpf))
     await run_turn(graph, "p4", text("Bati o carro"))
     r = await run_turn(graph, "p4", text("hmm"))
-    assert "Não consegui entender" in replies(r)
+    assert "consegui entender" in replies(r)
     for _ in range(2):
         r = await run_turn(graph, "p4", text("talvez"))
     assert r.state.claim_stage == ClaimStage.ESCALADO_HUMANO
@@ -188,7 +188,7 @@ async def test_recent_policy_is_escalated_at_end_of_triage(
     )
     assert r.state.claim_stage == ClaimStage.ESCALADO_HUMANO
     assert r.state.terminal_reason == "guardrail_corporate"
-    assert "vou registrar o aviso" not in replies(r) and "especialistas humanos" in replies(r)
+    assert "vou registrar o aviso" not in replies(r) and "especialistas" in replies(r)
     check = next(e for e in r.events if e.event == "corporate_check")
     assert "recent_policy" in check.details and r.state.protocol is None
 
@@ -216,7 +216,7 @@ async def test_inactivity_timeout_restarts_triage(
     await run_turn(graph, "i1", text(happy_customer.cpf))  # aguardando "o que aconteceu"
     clock["now"] += timedelta(minutes=settings.triage.inactivity_timeout_minutes + 1)
     r = await run_turn(graph, "i1", text("Bati o carro"))
-    assert "reiniciar o atendimento" in replies(r) and "CPF" in replies(r)
+    assert "recomeçar o atendimento" in replies(r) and "CPF" in replies(r)
     assert r.state.awaiting is not None and r.state.awaiting.field == "cpf"
     assert any(e.event == "inactivity_timeout" for e in r.events)
 
@@ -253,7 +253,7 @@ async def test_writer_failure_keeps_original(
     settings.llm.rewrite_messages = True
     graph = make_graph(deps(registry, settings, llm=FakeLLMClient([LLMError("down")])))
     r = await run_turn(graph, "w2", text("Oi"))
-    assert "informe o CPF" in replies(r)
+    assert "informar o CPF" in replies(r)
 
 
 async def test_writer_output_still_goes_through_output_guardrail(

@@ -138,7 +138,7 @@ def test_rest_messages_and_pause(client: TestClient) -> None:
     assert client.post("/control/pause", json={"paused": True}).json()["global_paused"] is True
     out = client.post(f"/conversations/{conv}/messages", json={"text": customer["cpf"]}).json()
     assert out["state"]["claim_stage"] == "TRIAGEM"
-    assert "especialistas humanos" in out["replies"][0]["text"]
+    assert "transferido para um de nossos especialistas" in out["replies"][0]["text"]
 
     client.post("/control/pause", json={"paused": False})
     out = client.post(f"/conversations/{conv}/messages", json={"text": customer["cpf"]}).json()

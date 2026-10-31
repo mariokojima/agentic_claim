@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from claims_agents.agents.triage.completion import triage_completed
+from claims_agents.agents.triage.completion import empathy_once, triage_completed
 from claims_agents.agents.triage.state import TriageGraphState
 from claims_agents.agents.triage.subagents.parties.detector import PartiesDetector
 from claims_agents.agents.triage.subagents.parties.schemas import PartiesExtraction
@@ -67,7 +67,7 @@ def build(
                 "result": StageResult(
                     status="needs_input",
                     reason=f"Envolvidos: falta {', '.join(missing)}",
-                    user_message=messages.get(key),
+                    user_message=empathy_once(sub.outcome, messages) + messages.get(key),
                 ),
             }
         sub.step = "done"
